@@ -145,24 +145,24 @@ function initApp() {
     }
 
     function dataURItoBlob(dataURI, callback) {
-    // convert base64 to raw binary data held in a string
-    // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
-    var byteString = atob(dataURI.split(',')[1]);
+        // convert base64 to raw binary data held in a string
+        // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+        var byteString = atob(dataURI.split(',')[1]);
 
-    // separate out the mime component
-    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+        // separate out the mime component
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
 
-    // write the bytes of the string to an ArrayBuffer
-    var ab = new ArrayBuffer(byteString.length);
-    var ia = new Uint8Array(ab);
-    for (var i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
+        // write the bytes of the string to an ArrayBuffer
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+
+        // write the ArrayBuffer to a blob, and you're done
+        var bb = new Blob([ab]);
+        return bb;
     }
-
-    // write the ArrayBuffer to a blob, and you're done
-    var bb = new Blob([ab]);
-    return bb;
-}
 
     function saveProfile() {
         var id = localStorage.id;
@@ -540,6 +540,7 @@ function initApp() {
     function returnedFromPause() {
         console.log('session resumed');
         checkIfAlreadyLoggedIn();
+        getActiveMc();
         //window.location.reload();
     }
 
@@ -656,7 +657,7 @@ function initApp() {
             $('.main-content-container').show();
 
             showLoader("Welcome back " + localStorage.firstname + "!");
-
+            
             $('.first-page').fadeOut(500);
             $('.login-page').fadeOut(500);
             setTimeout(function() {
@@ -708,12 +709,6 @@ function initApp() {
                 unlockDm();
                 unlockCourses();
             }
-            
-            getActiveMc();
-
-
-            
-
         } else {
             $('.loader').fadeOut(200);
             setTimeout(function() {
@@ -1055,6 +1050,7 @@ function initApp() {
             }
         });
     }
+
     function setRegisteredUser(email){
         var url = "https://script.google.com/macros/s/AKfycbzbotp9MT49gl1UuEYt9UnN0jFZmXOOOmKF2j83MYlOk7xYtxmw/exec";
         var jqxhr = $.ajax({
@@ -1065,6 +1061,7 @@ function initApp() {
             $('.loader').hide();
         });
     }
+
     function sendRegisterEmail(email, fullname){
 
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
