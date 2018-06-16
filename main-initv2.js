@@ -20,6 +20,15 @@ function initApp() {
         $('.loader .loader-message').text(text);
     }
 
+    function resetMC(){
+        localStorage.remove("submittedspotify");
+        localStorage.remove("submittedwritingholidays");
+        localStorage.remove("submittedbookingagent");
+        localStorage.remove("submittedbmg");
+        localStorage.remove("submittedmusicsync");
+        localStorage.remove("activemc");
+    }
+
     function getMobileOperatingSystem() {
         var userAgent = navigator.userAgent || navigator.vendor || window.opera;
         if (/windows phone/i.test(userAgent)) {
@@ -2813,8 +2822,14 @@ function initApp() {
 
     function getActiveMc(){
         if ( typeof(localStorage.activemc != "undefined") ){
-            $('#b-mc .length').show();
-            $('#b-mc .length').text(localStorage.activemc);
+            var parseActiveMc = parseInt(localStorage.activemc);
+            if (  parseActiveMc == 0 || parseActiveMc > 0 || parseActiveMc == NaN){
+                $('#b-mc .length').hide();
+            } else {
+                $('#b-mc .length').show();
+                $('#b-mc .length').text(localStorage.activemc);
+            }
+            
         } else {
             $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
                 console.log("mc tiles");
