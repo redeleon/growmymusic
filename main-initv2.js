@@ -2746,6 +2746,8 @@ function initApp() {
                     var amc = parseInt(localStorage.activemc) - 1;
                     localStorage.setItem('activemc',amc);
                     $('#b-mc .length').text(localStorage.activemc);
+                } else {
+                    localStorage.setItem('activemc',"0");
                 }
                 
             }, function(response) {
@@ -2805,6 +2807,8 @@ function initApp() {
     }
 
     function getActiveMc(){
+        console.log("active mc qty :"+localStorage.activemc);
+        
         if ( typeof(localStorage.activemc) != "undefined") {
             var parseActiveMc = parseInt(localStorage.activemc);
             console.log('puling active mc from local');
