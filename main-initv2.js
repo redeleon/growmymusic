@@ -202,9 +202,11 @@ function initApp() {
                 if (entries.length > 0) {
                     for (var i = 0; i < entries.length; i++) {
                         var entry = entries[i];
-                        if (entry.gsx$id.$t == localStorage.id) {
+                        var dbId = parseInt(entry.gsx$id.$t);
+                        var localId = parseInt(localStorage.id);
+                        if ( dbId == localId ) {
                             localStorage.setItem("hasprofile", "true");
-                            localStorage.setItem("profile", entry.gsx$data.$t);
+                            localStorage.setItem("profile", dbId);
                             setProfile();
                         }
                     }
@@ -4179,15 +4181,18 @@ function initApp() {
     /* ==================================
                 INIT ORDER
     ===================================*/
-    if (localStorage.hasprofile == undefined) {
-        getProfile();
-        console.log('pulling profiles from db');
-        initProfileBtns();
-    } else {
-        setProfile();
-        console.log('pulling profiles from local');
-        initProfileBtns();
+    if( typeof(localStorage.id) != "undefined" ){
+        if (typeof(localStorage.profile) != "undefined") {
+            setProfile();
+            console.log('pulling profiles from local');
+            initProfileBtns();
+        } else {
+            getProfile();
+            console.log('pulling profiles from db');
+            initProfileBtns();
+        }
     }
+    
 
     getAds();
 
