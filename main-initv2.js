@@ -2872,6 +2872,7 @@ function initApp() {
                         if (typeof(localStorage.submissionnumber) != "undefined"){
                             if ( parseInt(localStorage.submissionnumber) === parseInt(context[i].gsx$number.$t) ){
                                 resetMC();
+                                getActiveMc();
                             }
                         } else {
                             localStorage.setItem("submissionnumber",context[i].gsx$number.$t);
@@ -4208,7 +4209,7 @@ function initApp() {
 
     checkIfAlreadyLoggedIn();
     console.log('checked if logged in');
-    
+
     getActiveMc();
     getSubmissionNumber();
 
