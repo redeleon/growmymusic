@@ -2717,7 +2717,7 @@ function initApp() {
 
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
         var action = testMode == true ? "membershipcalendarmailtest" : "membershipcalendarmail";
-        var tileType = type.replace("-","");
+        var tileType = type.indexOf("-") > -1 ? type.replace("-","") : type;
         var length
         var httpData = {
             "action": action,
