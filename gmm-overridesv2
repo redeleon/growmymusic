@@ -1,0 +1,44 @@
+div#my-account-page .ma-banner {
+    background-size: cover;
+}
+
+body .loader {
+    height: auto;
+    top: initial;
+    bottom: 0px;
+    text-align: center;
+    padding: 10px;
+    z-index: 9999999999;
+}
+
+body .loader-inner {
+    position: relative;
+    display: inline-block;
+    top: 0;
+    left: 0;
+    vertical-align: middle;
+    transform: translate(0, 0);
+}
+
+body p.loader-message {
+    top: 0;
+    display: inline-block;
+    width: auto;
+    vertical-align: middle;
+    margin-left: 5px;
+    font-size: 17px;
+    position: relative;
+}
+
+div#mail-modal > div,
+div#locked-wrap .locked-modal,
+#first-use .locked-modal,
+div#learnmore-wrap .locked-modal{
+	-webkit-overflow-scrolling: touch;
+
+}
+
+.ma-banner-content p.email {
+    color: #fff;
+    font-size: 15px;
+}
