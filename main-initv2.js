@@ -2807,6 +2807,7 @@ function initApp() {
     function getActiveMc(){
         if ( typeof(localStorage.activemc) != "undefined") {
             var parseActiveMc = parseInt(localStorage.activemc);
+            console.log('puling active mc from local');
             if (  parseActiveMc == 0 || parseActiveMc > 0 || parseActiveMc == NaN){
                 $('#b-mc .length').hide();
             } else {
@@ -2819,7 +2820,7 @@ function initApp() {
                 console.log("mc tiles");
                 console.log('gdoc : ' + xhr);
                 console.log(data);
-
+                console.log('puling active mc from db');
 
 
                 if (xhr == 200 || xhr == "success") {
