@@ -2821,7 +2821,7 @@ function initApp() {
     }
 
     function getActiveMc(){
-        if ( typeof(localStorage.activemc != "undefined") ){
+        if ( typeof(localStorage.activemc) != "undefined") {
             var parseActiveMc = parseInt(localStorage.activemc);
             if (  parseActiveMc == 0 || parseActiveMc > 0 || parseActiveMc == NaN){
                 $('#b-mc .length').hide();
@@ -4180,12 +4180,6 @@ function initApp() {
             $('#seminar-schedule').html('');
             removeAllVideos();
         });
-
-        // $('.category-title').each(function() {
-        //     $(this).click(function() {
-        //         $(this).next().stop().slideToggle(100);
-        //     });
-        // });
     }
 
 
