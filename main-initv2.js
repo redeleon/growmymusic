@@ -228,26 +228,15 @@ function initApp() {
         
 
         for (x = 0; x < profile.length; x++) {
-            if (profile[x].name == "profile-image") {
-                var imageVal = 'data:image/jpeg;base64,' + profile[x].value;
-                $('#my-profile img[data-details="profile-image"]').attr('src',imageVal );
-                $('#profile-photo-img').attr('src', imageVal);
-                $('#ma-pimg').attr('src', imageVal);
-
-                $('input#image-data').val(profile[x].value);
-            } else {
-                $('input[name="' + profile[x].name + '"]').val(profile[x].value);
-                $('#my-account-page p[data-artistvalue="'+profile[x].name+'"]').text(profile[x].value);
-            }
-
+            $('input[name="' + profile[x].name + '"]').val(profile[x].value);
+            $('#my-account-page p[data-artistvalue="'+profile[x].name+'"]').text(profile[x].value);
             localStorage.setItem(profile[x].name, profile[x].value);
         }
     }
 
     function sendProfileDetails(fn, ln, em, subj,type) {
         var profile = JSON.parse(localStorage.profile);
-        var profileimage,
-            name,
+        var name,
             email,
             bio,
             website,
@@ -273,8 +262,6 @@ function initApp() {
 
         for (x = 0; x < profile.length; x++) {
             switch (profile[x].name) {
-                case "profile-image":
-                    profileimage = profile[x].value;
                 case "profile-name":
                     name = profile[x].value;
                     break;
@@ -2837,9 +2824,13 @@ function initApp() {
                 console.log(data);
 
 
+
                 if (xhr == 200 || xhr == "success") {
                     var context = data.feed.entry;
                     console.log(context);
+                    
+                    activeMC = 0;
+
                     if (context.length > 0) {
                          for (var i = 0; i < context.length; i++) {
                             if (context[i].gsx$status.$t === "A") {
