@@ -2808,7 +2808,7 @@ function initApp() {
 
     function getActiveMc(){
         console.log("active mc qty :"+localStorage.activemc);
-        
+
         if ( typeof(localStorage.activemc) != "undefined") {
             var parseActiveMc = parseInt(localStorage.activemc);
             console.log('puling active mc from local');
@@ -2863,7 +2863,7 @@ function initApp() {
                     switch (context[i].gsx$name.$t) {
                         case "Submission Number":
                         if (typeof(localStorage.submissionnumber) != "undefined"){
-                            if ( parseInt(localStorage.submissionnumber) === parseInt(context[i].gsx$number.$t) ){
+                            if ( parseInt(localStorage.submissionnumber) != parseInt(context[i].gsx$number.$t) ){
                                 resetMC();
                                 getActiveMc();
                             }
