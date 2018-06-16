@@ -2857,6 +2857,31 @@ function initApp() {
 
         
     }
+
+    function getSubmissionNumber(){
+        $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
+            console.log("mc tiles");
+            console.log('gdoc : ' + xhr);
+            console.log(data);
+            if (xhr == 200 || xhr == "success") {
+                var context = data.feed.entry;
+                console.log(context);
+                for (var i = 0; i < context.length; i++) {
+                    switch (context[i].gsx$name.$t) {
+                        case "Submission Number":
+                        if (typeof(localStorage.submissionnumber) != "undefined"){
+                            if ( parseInt(localStorage.submissionnumber) === parseInt(context[i].gsx$number.$t) ){
+                                resetMC();
+                            }
+                        } else {
+                            localStorage.setItem("submissionnumber",context[i].gsx$number.$t);
+                        }
+                    }
+                }
+            }
+        })
+    }
+    
     function membershipCalendarTiles(callback) {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
             console.log("mc tiles");
@@ -2868,6 +2893,7 @@ function initApp() {
                 console.log(context);
                 for (var i = 0; i < context.length; i++) {
                     switch (context[i].gsx$name.$t) {
+                        
                         case "Spotify":
                             $('.members-calendar-tiles[data-type="spotify"]').attr('data-msg', context[i].gsx$message.$t);
                             if (context[i].gsx$status.$t === "A") {
@@ -4182,7 +4208,9 @@ function initApp() {
 
     checkIfAlreadyLoggedIn();
     console.log('checked if logged in');
+    
     getActiveMc();
+    getSubmissionNumber();
 
     //getResources();
     //getDmResources();
