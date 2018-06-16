@@ -232,7 +232,7 @@ function initApp() {
         }
     }
 
-    function sendProfileDetails(fn, ln, em, subj) {
+    function sendProfileDetails(fn, ln, em, subj,type) {
         var profile = JSON.parse(localStorage.profile);
         var profileimage,
             name,
@@ -354,7 +354,7 @@ function initApp() {
             "Number of Co-writers (Apple Music): " + applecowriters + "\n";
 
 
-        sendMembershipCalendarMail(fn, ln, em, subj, content)
+        sendMembershipCalendarMail(fn, ln, em, subj, content,type)
 
     }
 
@@ -2717,7 +2717,7 @@ function initApp() {
 
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
         var action = testMode == true ? "membershipcalendarmailtest" : "membershipcalendarmail";
-        var tileType = type.indexOf("-") > -1 ? type.replace("-","") : type;
+        var tileType = type.type.replace("-","");
         var length
         var httpData = {
             "action": action,
@@ -2736,7 +2736,7 @@ function initApp() {
             performHttp(url, "post", httpData, function(response) {
                 console.log(response);
                 mailModalSuccess(type);
-                $('.members-calendar-tiles[data-type="'+tileType+'"]').addClass('submitted');
+                $('.members-calendar-tiles[data-type="'+type+'"]').addClass('submitted');
                 localStorage.setItem("submitted"+tileType,"true");
                 if ( parseInt(localStorage.activemc) > 0){
                     var amc = parseInt(localStorage.activemc) - 1;
@@ -3856,7 +3856,7 @@ function initApp() {
 
                             $('#mail-modal button#mail-profile-send').click(function() {
 
-                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Streaming Services Submission");
+                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Streaming Services Submission",type);
                             });
 
                             $('#mail-modal button#mail-send').click(function() {
@@ -3935,7 +3935,7 @@ function initApp() {
 
                             $('#mail-modal button#mail-profile-send').click(function() {
 
-                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Writing Holidays Submission");
+                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Writing Holidays Submission",type);
                             });
 
                             $('#mail-modal button#mail-send').click(function() {
@@ -3999,7 +3999,7 @@ function initApp() {
 
                             $('#mail-modal button#mail-profile-send').click(function() {
 
-                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Booking Agent Submission");
+                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Booking Agent Submission",type);
                             });
 
                             $('#mail-modal button#mail-send').click(function() {
@@ -4054,7 +4054,7 @@ function initApp() {
 
                             $('#mail-modal button#mail-profile-send').click(function() {
 
-                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "2-Day Seminar Inquiry");
+                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "2-Day Seminar Inquiry",type);
                             });
 
                             $('#mail-modal button#mail-send').click(function() {
