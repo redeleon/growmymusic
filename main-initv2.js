@@ -41,7 +41,7 @@ function initApp() {
     }
 
     var shareoptions = {
-        message: 'Being as into music as you are, you should check out Grow My Music\'s Virtual Artist Manager App. It\'s amazing! http://www.growmymusic.com',
+        message: 'Being a muso, you should check out Grow My Music\'s Virtual Artist Manager App. It\'s amazing! http://www.growmymusic.com',
         subject: 'Check out Grow My Music!',
         chooserTitle: 'Share via'
     };
@@ -3907,6 +3907,7 @@ function initApp() {
                                 $('#seminar-schedule').hide();
                                 $('#beatstars-items').hide();
                                 $('#mail-form').hide();
+                                $('.mail-modal-buttons').show();
                             } else {
                                 locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
                             }
@@ -3927,9 +3928,11 @@ function initApp() {
                             $('#mail-form').hide();
                             $('#beatstars-items').show();
                             $('#mail-modal').fadeIn(200);
+
+                            $('.mail-modal-buttons').hide();
                             break;
                         case 'writing-holidays':
-                            if ( typeof(localStorage.writingholidays) == "undefined" ) { 
+                            if ( typeof(localStorage.submittedwritingholidays) == "undefined" ) { 
                                 $('#writing-holidays-video').show();
                                 $('#writing-holidays-video-mp4').attr('src', 'https://s3.amazonaws.com/gmmonlinecourse2017/ads/writingholiday.mp4');
                                 var vid = $('#writing-holidays-video')[0];
@@ -3990,7 +3993,7 @@ function initApp() {
                                 $('#seminar-schedule').hide();
                                 $('#beatstars-items').hide();
                                 $('#mail-form').hide();
-
+                                $('.mail-modal-buttons').show();
                             } else {
                                 locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
                             }
@@ -4001,7 +4004,7 @@ function initApp() {
 
                             break;
                         case 'booking-agent':
-                            if ( typeof(localStorage.bookingagent) == "undefined" ) { 
+                            if ( typeof(localStorage.submittedbookingagent) == "undefined" ) { 
                                 $('#writing-holidays-video').hide();
                                 $('#writing-holidays-video-mp4').attr('src', '');
 
@@ -4057,6 +4060,7 @@ function initApp() {
                                 $('#seminar-schedule').hide();
                                 $('#beatstars-items').hide();
                                 $('#mail-form').hide();
+                                $('.mail-modal-buttons').show();
                             } else {
                                 locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
                             }
@@ -4117,6 +4121,7 @@ function initApp() {
                             $('#seminar-schedule').show();
                             $('#beatstars-items').hide();
                             $('#mail-form').hide();
+                            $('.mail-modal-buttons').show();
                             break;
                     }
                 }
@@ -4131,6 +4136,7 @@ function initApp() {
         $('div.ml-close').click(function() {
             $('#mail-modal').fadeOut(200);
             $('#seminar-schedule').html('');
+            removeAllVideos();
         });
 
         // $('.category-title').each(function() {
