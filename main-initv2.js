@@ -21,12 +21,12 @@ function initApp() {
     }
 
     function resetMC(){
-        localStorage.remove("submittedspotify");
-        localStorage.remove("submittedwritingholidays");
-        localStorage.remove("submittedbookingagent");
-        localStorage.remove("submittedbmg");
-        localStorage.remove("submittedmusicsync");
-        localStorage.remove("activemc");
+        localStorage.removeItem("submittedspotify");
+        localStorage.removeItem("submittedwritingholidays");
+        localStorage.removeItem("submittedbookingagent");
+        localStorage.removeItem("submittedbmg");
+        localStorage.removeItem("submittedmusicsync");
+        localStorage.removeItem("activemc");
     }
 
     function getMobileOperatingSystem() {
