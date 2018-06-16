@@ -210,10 +210,13 @@ function initApp() {
     function setProfile() {
         var profile = JSON.parse(localStorage.profile);
 
-        var localImageVal = 'data:image/jpeg;base64,' + localStorage.profileimg;
-        $('input#image-data').val(localStorage.profileimg);
-        $('#ma-pimg').attr('src', localImageVal);
-        $('#my-profile img[data-details="profile-image"]').attr('src',localImageVal);
+        if (typeof(localStorage.profileimg) != "undefined"){
+            var localImageVal = 'data:image/jpeg;base64,' + localStorage.profileimg;
+            $('input#image-data').val(localStorage.profileimg);
+            $('#ma-pimg').attr('src', localImageVal);
+            $('#my-profile img[data-details="profile-image"]').attr('src',localImageVal);
+        }
+        
 
         for (x = 0; x < profile.length; x++) {
             if (profile[x].name == "profile-image") {
@@ -709,6 +712,11 @@ function initApp() {
                 unlockDm();
                 unlockCourses();
             }
+            
+            getActiveMc();
+
+
+            
 
         } else {
             $('.loader').fadeOut(200);
@@ -1224,7 +1232,10 @@ function initApp() {
         
         if (typeof(localStorage.profile) != "undefined") {
             setProfile();
+        } else {
+            getProfile();
         }
+
         $('#artist-profile-btn').click(function() {
             $('#profile-builder').fadeIn();
         });
@@ -2717,7 +2728,7 @@ function initApp() {
 
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
         var action = testMode == true ? "membershipcalendarmailtest" : "membershipcalendarmail";
-        var tileType = type.type.replace("-","");
+        var tileType = type.indexOf("-") > 0 ? type.replace("-","") : "";
         var length
         var httpData = {
             "action": action,
@@ -2801,27 +2812,35 @@ function initApp() {
     }
 
     function getActiveMc(){
-        $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
-            console.log("mc tiles");
-            console.log('gdoc : ' + xhr);
-            console.log(data);
+        if ( typeof(localStorage.activemc != "undefined") ){
+            $('#b-mc .length').show();
+            $('#b-mc .length').text(localStorage.activemc);
+        } else {
+            $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
+                console.log("mc tiles");
+                console.log('gdoc : ' + xhr);
+                console.log(data);
 
-            if (xhr == 200 || xhr == "success") {
-                var context = data.feed.entry;
-                console.log(context);
-                if (context.length > 0) {
-                     for (var i = 0; i < context.length; i++) {
-                        if (context[i].gsx$status.$t === "A") {
-                            activeMC++;
-                        }
-                     }
 
-                    localStorage.setItem('activemc',activeMC);
-                    $('#b-mc .length').show();
-                    $('#b-mc .length').text(localStorage.activemc);
+                if (xhr == 200 || xhr == "success") {
+                    var context = data.feed.entry;
+                    console.log(context);
+                    if (context.length > 0) {
+                         for (var i = 0; i < context.length; i++) {
+                            if (context[i].gsx$status.$t === "A") {
+                                activeMC++;
+                            }
+                         }
+
+                        localStorage.setItem('activemc',activeMC);
+                        $('#b-mc .length').show();
+                        $('#b-mc .length').text(localStorage.activemc);
+                    }
                 }
-            }
-        });
+            });
+        }
+
+        
     }
     function membershipCalendarTiles(callback) {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
@@ -3832,64 +3851,66 @@ function initApp() {
             $(this).click(function() {
                 var type = $(this).attr('data-type');
                 var isSubmitted = $(this).hasClass('submitted');
-
+                var dataType = type.indexOf('-') > -1 ? type.replace("-","") : type;
 
                 if ($(this).find('.tile-wrap').hasClass('locked')) {
                     locked(type, $(this).attr('data-msg'));
                 } 
-                else if(isSubmitted == true) {
-                    locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
-                }
                 else {
                     switch (type) {
                         case 'spotify':
 
-                            $('#writing-holidays-video').hide();
-                            $('#writing-holidays-video-mp4').attr('src', '');
+                            if ( typeof(localStorage.submittedspotify) == "undefined" ) {
+                                $('#writing-holidays-video').hide();
+                                $('#writing-holidays-video-mp4').attr('src', '');
 
-                            var header = "We service to Spotify twice a year.";
-                            var subheader = "please don't forget to include the link to your music on the message field below";
-                            var content = "Please submit this single to pitch to Spotify  \n\n" +
-                                "[paste link to single here]";
+                                var header = "We service to Spotify twice a year.";
+                                var subheader = "please don't forget to include the link to your music on the message field below";
+                                var content = "Please submit this single to pitch to Spotify  \n\n" +
+                                    "[paste link to single here]";
 
-                            setMailModal(content, header, subheader, type);
+                                setMailModal(content, header, subheader, type);
 
-                            $('#mail-modal button#mail-profile-send').click(function() {
+                                $('#mail-modal button#mail-profile-send').click(function() {
 
-                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Streaming Services Submission",type);
-                            });
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Streaming Services Submission",type);
+                                });
 
-                            $('#mail-modal button#mail-send').click(function() {
-                                var fn = $('input#mail-fn').val();
-                                var ln = $('input#mail-ln').val();
-                                var em = $('input#mail-email').val();
-                                var msg = $('textarea#mail-msg').val();
-                                var type = $(this).attr('data-submitlink');
-                                var subj = "Streaming Services Submission";
+                                $('#mail-modal button#mail-send').click(function() {
+                                    var fn = $('input#mail-fn').val();
+                                    var ln = $('input#mail-ln').val();
+                                    var em = $('input#mail-email').val();
+                                    var msg = $('textarea#mail-msg').val();
+                                    var type = $(this).attr('data-submitlink');
+                                    var subj = "Streaming Services Submission";
 
-                                if (fn == "") {
-                                    $('input#mail-fn').prev().show();
-                                }
-                                if (ln == "") {
-                                    $('input#mail-ln').prev().show();
-                                }
-                                if (em == "") {
-                                    $('input#mail-email').prev().show();
-                                }
-                                if (msg == "") {
-                                    $('textarea#mail-msg').prev().show();
-                                }
+                                    if (fn == "") {
+                                        $('input#mail-fn').prev().show();
+                                    }
+                                    if (ln == "") {
+                                        $('input#mail-ln').prev().show();
+                                    }
+                                    if (em == "") {
+                                        $('input#mail-email').prev().show();
+                                    }
+                                    if (msg == "") {
+                                        $('textarea#mail-msg').prev().show();
+                                    }
 
-                                if (fn != "" && ln != "" && em != "" && msg != "") {
-                                    sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
-                                }
-                            });
+                                    if (fn != "" && ln != "" && em != "" && msg != "") {
+                                        sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
+                                    }
+                                });
 
 
-                            $('#mail-modal .mail-header span').show();
-                            $('#seminar-schedule').hide();
-                            $('#beatstars-items').hide();
-                            $('#mail-form').hide();
+                                $('#mail-modal .mail-header span').show();
+                                $('#seminar-schedule').hide();
+                                $('#beatstars-items').hide();
+                                $('#mail-form').hide();
+                            } else {
+                                locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
+                            }
+                            
                             break;
                         case 'bmg':
                             var url = $(this).attr('data-url');
@@ -3908,67 +3929,71 @@ function initApp() {
                             $('#mail-modal').fadeIn(200);
                             break;
                         case 'writing-holidays':
+                            if ( typeof(localStorage.writingholidays) == "undefined" ) { 
+                                $('#writing-holidays-video').show();
+                                $('#writing-holidays-video-mp4').attr('src', 'https://s3.amazonaws.com/gmmonlinecourse2017/ads/writingholiday.mp4');
+                                var vid = $('#writing-holidays-video')[0];
+                                vid.load();
 
-                            $('#writing-holidays-video').show();
-                            $('#writing-holidays-video-mp4').attr('src', 'https://s3.amazonaws.com/gmmonlinecourse2017/ads/writingholiday.mp4');
-                            var vid = $('#writing-holidays-video')[0];
-                            vid.load();
+                                $('video#writing-holidays-video').click(function() {
+                                    if (vid.paused)
+                                        vid.play();
+                                    else
+                                        vid.pause();
+                                });
 
-                            $('video#writing-holidays-video').click(function() {
-                                if (vid.paused)
-                                    vid.play();
-                                else
-                                    vid.pause();
-                            });
+                                var header = "Express your interest for the next Grow My Music Writing Holiday";
+                                var subheader = "Writing Holiday’s occur a various points throughout the year in all sorts of locations. To be considered complete the form below. NOTE: There is a cost to attend the writing holiday’s. Costs vary depending on the camp. This is simply an expression of interest though from your end to get on our radar.";
 
-                            var header = "Express your interest for the next Grow My Music Writing Holiday";
-                            var subheader = "Writing Holiday’s occur a various points throughout the year in all sorts of locations. To be considered complete the form below. NOTE: There is a cost to attend the writing holiday’s. Costs vary depending on the camp. This is simply an expression of interest though from your end to get on our radar.";
+                                var content = "Full name: \n" +
+                                    "Email address: \n" +
+                                    "Phone number: \n" +
+                                    "State: \n\n" +
+                                    "Paste links to 2 songs you’ve written or co-written\n" +
+                                    "List what you wrote in each song\n";
 
-                            var content = "Full name: \n" +
-                                "Email address: \n" +
-                                "Phone number: \n" +
-                                "State: \n\n" +
-                                "Paste links to 2 songs you’ve written or co-written\n" +
-                                "List what you wrote in each song\n";
+                                setMailModal(content, header, subheader, type);
 
-                            setMailModal(content, header, subheader, type);
+                                $('#mail-modal button#mail-profile-send').click(function() {
 
-                            $('#mail-modal button#mail-profile-send').click(function() {
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Writing Holidays Submission",type);
+                                });
 
-                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Writing Holidays Submission",type);
-                            });
+                                $('#mail-modal button#mail-send').click(function() {
+                                    var fn = $('input#mail-fn').val();
+                                    var ln = $('input#mail-ln').val();
+                                    var em = $('input#mail-email').val();
+                                    var msg = $('textarea#mail-msg').val();
+                                    var type = $(this).attr('data-submitlink');
+                                    var subj = "Writing Holidays Submission";
 
-                            $('#mail-modal button#mail-send').click(function() {
-                                var fn = $('input#mail-fn').val();
-                                var ln = $('input#mail-ln').val();
-                                var em = $('input#mail-email').val();
-                                var msg = $('textarea#mail-msg').val();
-                                var type = $(this).attr('data-submitlink');
-                                var subj = "Writing Holidays Submission";
+                                    if (fn === "") {
+                                        $('input#mail-fn').prev().show();
+                                    }
+                                    if (ln === "") {
+                                        $('input#mail-ln').prev().show();
+                                    }
+                                    if (em === "") {
+                                        $('input#mail-email').prev().show();
+                                    }
+                                    if (msg === "") {
+                                        $('textarea#mail-msg').prev().show();
+                                    }
 
-                                if (fn === "") {
-                                    $('input#mail-fn').prev().show();
-                                }
-                                if (ln === "") {
-                                    $('input#mail-ln').prev().show();
-                                }
-                                if (em === "") {
-                                    $('input#mail-email').prev().show();
-                                }
-                                if (msg === "") {
-                                    $('textarea#mail-msg').prev().show();
-                                }
+                                    if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
+                                        sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
+                                    }
 
-                                if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
-                                    sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
-                                }
+                                });
 
-                            });
+                                $('#mail-modal .mail-header span').show();
+                                $('#seminar-schedule').hide();
+                                $('#beatstars-items').hide();
+                                $('#mail-form').hide();
 
-                            $('#mail-modal .mail-header span').show();
-                            $('#seminar-schedule').hide();
-                            $('#beatstars-items').hide();
-                            $('#mail-form').hide();
+                            } else {
+                                locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
+                            }
                             break;
                         case 'music-sync':
                             var url = $(this).attr('data-url');
@@ -3976,62 +4001,67 @@ function initApp() {
 
                             break;
                         case 'booking-agent':
+                            if ( typeof(localStorage.bookingagent) == "undefined" ) { 
+                                $('#writing-holidays-video').hide();
+                                $('#writing-holidays-video-mp4').attr('src', '');
 
-                            $('#writing-holidays-video').hide();
-                            $('#writing-holidays-video-mp4').attr('src', '');
+                                var header = "Biannually we pitch motivated artists who are tour-ready to Australia’s most heritage and notable booking agents.";
+                                var subheader = "Please let us know why you or your band deserves to be signed to a booking agent in your artist profile and submit below.";
 
-                            var header = "Biannually we pitch motivated artists who are tour-ready to Australia’s most heritage and notable booking agents.";
-                            var subheader = "Please let us know why you or your band deserves to be signed to a booking agent in your artist profile and submit below.";
+                                var content = "I'd like to pitch [Insert Artist/Band name] to be signed by a booking agent. Here's some reasons why I believe they'd value me/us on their roster: \n\n" +
+                                    "[Insert, in dot points your achievements, for example \n" +
+                                    "● Who you’ve supported previously?\n" +
+                                    "● Have you sold out any shows yourself?\n" +
+                                    "● Has someone notable posted about you?\n" +
+                                    "● Does your Spotify statistics present well?\n" +
+                                    "● Do you have a strong social media presence? \n" +
+                                    "● Have you had radio play? etc.\n\n" +
+                                    "● Links to 1-2 of your social media accounts\n" +
+                                    "● 1 link to your strongest song]\n\n" +
+                                    "Thank you Grow My Music, you guys are game changers for motivated muso’s!";
 
-                            var content = "I'd like to pitch [Insert Artist/Band name] to be signed by a booking agent. Here's some reasons why I believe they'd value me/us on their roster: \n\n" +
-                                "[Insert, in dot points your achievements, for example \n" +
-                                "● Who you’ve supported previously?\n" +
-                                "● Have you sold out any shows yourself?\n" +
-                                "● Has someone notable posted about you?\n" +
-                                "● Does your Spotify statistics present well?\n" +
-                                "● Do you have a strong social media presence? \n" +
-                                "● Have you had radio play? etc.\n\n" +
-                                "● Links to 1-2 of your social media accounts\n" +
-                                "● 1 link to your strongest song]\n\n" +
-                                "Thank you Grow My Music, you guys are game changers for motivated muso’s!";
+                                setMailModal(content, header, subheader, type);
 
-                            setMailModal(content, header, subheader, type);
+                                $('#mail-modal button#mail-profile-send').click(function() {
 
-                            $('#mail-modal button#mail-profile-send').click(function() {
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Booking Agent Submission",type);
+                                });
 
-                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Booking Agent Submission",type);
-                            });
+                                $('#mail-modal button#mail-send').click(function() {
+                                    var fn = $('input#mail-fn').val();
+                                    var ln = $('input#mail-ln').val();
+                                    var em = $('input#mail-email').val();
+                                    var msg = $('textarea#mail-msg').val();
+                                    var type = $(this).attr('data-submitlink');
+                                    var subj = "Booking Agent Submission";
 
-                            $('#mail-modal button#mail-send').click(function() {
-                                var fn = $('input#mail-fn').val();
-                                var ln = $('input#mail-ln').val();
-                                var em = $('input#mail-email').val();
-                                var msg = $('textarea#mail-msg').val();
-                                var type = $(this).attr('data-submitlink');
-                                var subj = "Booking Agent Submission";
+                                    if (fn === "") {
+                                        $('input#mail-fn').prev().show();
+                                    }
+                                    if (ln === "") {
+                                        $('input#mail-ln').prev().show();
+                                    }
+                                    if (em === "") {
+                                        $('input#mail-email').prev().show();
+                                    }
+                                    if (msg === "") {
+                                        $('textarea#mail-msg').prev().show();
+                                    }
 
-                                if (fn === "") {
-                                    $('input#mail-fn').prev().show();
-                                }
-                                if (ln === "") {
-                                    $('input#mail-ln').prev().show();
-                                }
-                                if (em === "") {
-                                    $('input#mail-email').prev().show();
-                                }
-                                if (msg === "") {
-                                    $('textarea#mail-msg').prev().show();
-                                }
+                                    if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
+                                        sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
+                                    }
+                                });
 
-                                if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
-                                    sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
-                                }
-                            });
+                                $('#mail-modal .mail-header span').show();
+                                $('#seminar-schedule').hide();
+                                $('#beatstars-items').hide();
+                                $('#mail-form').hide();
+                            } else {
+                                locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
+                            }
 
-                            $('#mail-modal .mail-header span').show();
-                            $('#seminar-schedule').hide();
-                            $('#beatstars-items').hide();
-                            $('#mail-form').hide();
+                            
                             break;
                         case '2day-seminar':
 
