@@ -2808,7 +2808,7 @@ function initApp() {
         if ( typeof(localStorage.activemc) != "undefined") {
             var parseActiveMc = parseInt(localStorage.activemc);
             console.log('puling active mc from local');
-            if (  parseActiveMc == 0 || parseActiveMc > 0 || parseActiveMc == NaN){
+            if (  parseActiveMc == 0 || parseActiveMc < 0 || parseActiveMc == NaN){
                 $('#b-mc .length').hide();
             } else {
                 $('#b-mc .length').show();
