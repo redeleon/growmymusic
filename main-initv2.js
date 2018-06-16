@@ -4181,13 +4181,13 @@ function initApp() {
     ===================================*/
     if (localStorage.hasprofile == undefined) {
         getProfile();
+        console.log('pulling profiles from db');
         initProfileBtns();
     } else {
         setProfile();
+        console.log('pulling profiles from local');
         initProfileBtns();
     }
-
-    console.log('pulling profiles');
 
     getAds();
 
