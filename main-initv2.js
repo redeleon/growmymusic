@@ -2972,7 +2972,7 @@ function initApp() {
                 console.log("mc tiles");
                 console.log('gdoc : ' + xhr);
                 console.log(data);
-                console.log('puling active mc from db');
+                console.log('puling submitted items from db');
 
 
                 if (xhr == 200 || xhr == "success") {
@@ -2988,13 +2988,15 @@ function initApp() {
                                         var submittedItem = "submitted"+parsesubmissiontype;
                                         localStorage.setItem(submittedItem,"true");
                                         submitteditems++;
+                                        console.log('submitted items:' + submitteditems)
                                     }
                                 }
                              }
                         }
                     }
                     if(typeof(localStorage.activemc) != "undefined"){
-                        var active_mc = parseInt(localStorage.activemc) - submittedItem;
+                        var active_mc = parseInt(localStorage.activemc) - parseInt(submittedItem);
+                        console.log("submitted items from db:"+active_mc);
                         if ( active_mc > 0) {
                             localStorage.setItem('activemc',active_mc);
                             getActiveMc();
