@@ -2995,10 +2995,13 @@ function initApp() {
                         }
                     }
                     if(typeof(localStorage.activemc) != "undefined"){
-                        var active_mc = parseInt(localStorage.activemc) - parseInt(submittedItem);
+                        var active_mc = parseInt(localStorage.activemc) - parseInt(submitteditems);
                         console.log("submitted items from db:"+active_mc);
                         if ( active_mc > 0) {
                             localStorage.setItem('activemc',active_mc);
+                            getActiveMc();
+                        } else if ( active_mc < 1 ) {
+                            localStorage.setItem('activemc',"0");
                             getActiveMc();
                         }
                     }
