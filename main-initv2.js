@@ -236,6 +236,7 @@ function initApp() {
                         }
                     } 
                 }
+                $('.loader').fadeOut(200);
             } else {
                 $('.loader').fadeOut(200);
                 errorHandler("An error has occured while syncing your profile data, please try again.");
@@ -1253,8 +1254,10 @@ function initApp() {
         initLogout();
         
         if (typeof(localStorage.profile) != "undefined") {
+            console.log('profile in local');
             setProfile();
         } else {
+            console.log('pulling profile from db');
             getProfile();
         }
 
@@ -3418,7 +3421,10 @@ function initApp() {
         });
 
         $('button#t-profile').click(function(){
-            $('#profile-builder').fadeIn();
+            showLoader("checking for existing profiles");
+            getProfile();
+            initProfileBtns();
+            $('#edit-profile').fadeIn();
         });
 
         $('button#t-close').click(function(){
