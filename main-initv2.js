@@ -199,17 +199,19 @@ function initApp() {
             if (xhr == 200 || xhr == "success") {
                 var entries = data.feed.entry;
                 console.log(entries);
-                if (entries.length > 0) {
-                    for (var i = 0; i < entries.length; i++) {
-                        var entry = entries[i];
-                        var dbId = parseInt(entry.gsx$id.$t);
-                        var localId = parseInt(localStorage.id);
-                        if ( dbId == localId ) {
-                            localStorage.setItem("hasprofile", "true");
-                            localStorage.setItem("profile", dbId);
-                            setProfile();
+                if(entries != undefined) {
+                   if (entries.length > 0) {
+                        for (var i = 0; i < entries.length; i++) {
+                            var entry = entries[i];
+                            var dbId = parseInt(entry.gsx$id.$t);
+                            var localId = parseInt(localStorage.id);
+                            if ( dbId == localId ) {
+                                localStorage.setItem("hasprofile", "true");
+                                localStorage.setItem("profile", dbId);
+                                setProfile();
+                            }
                         }
-                    }
+                    } 
                 }
             } else {
                 $('.loader').fadeOut(200);
