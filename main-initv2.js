@@ -241,10 +241,10 @@ function initApp() {
         var qString = "";
 
         for(x=0;x<profile.length;x++){
-            qstring = qstring + '&' + profile[x].name + "=" + profile[x].value;
+            qString = qString + '&' + profile[x].name + "=" + profile[x].value;
         }
 
-        var completeQuery = "?id="+localStorage.id+"&type="+type+qstring;
+        var completeQuery = "?id="+localStorage.id+"&type="+type+qString;
         console.log(completeQuery);
 
         showLoader('syncing submission data to database');
