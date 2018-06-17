@@ -2734,9 +2734,7 @@ function initApp() {
             "MSFMessage": message,
         };
 
-        if(typeof(localStorage.profileimg) != "undefined"){
-            httpData.MSFImage = localStorage.profileimg
-        }
+        showLoader();
 
 
             performHttp(url, "post", httpData, function(response) {
@@ -2751,11 +2749,13 @@ function initApp() {
                 } else {
                     localStorage.setItem('activemc',"0");
                 }
-                
+                $('.loader').fadeOut();
             }, function(response) {
+                $('.loader').fadeOut();
                 console.log(response.status);
                 console.log(response.error);
                 errorHandler("An error has occured while trying to send your submission, please try again later");
+
             });
         
         
