@@ -215,11 +215,12 @@ function initApp() {
     }
 
     function logProfileDetails(){
-        
+        $('#image-data').removeAttr('disabled');
         var id = localStorage.id;
         var email = localStorage.user;
         var serializedForm = $('form#profile-form').serializeArray();
         var stringifiedForm = JSON.stringify(serializedForm);
+        localStorage.setItem('profile',stringifiedForm);
 
         setProfile();
         showLoader('syncing profile data to database');
@@ -294,6 +295,7 @@ function initApp() {
             $('input#image-data').val(localStorage.profileimg);
             $('#ma-pimg').attr('src', localStorage.profileimg);
             $('#my-profile img[data-details="profile-image"]').attr('src',localStorage.profileimg);
+            $('#profile-photo-img').attr('src', localStorage.profileimg);
         }
         
 
@@ -303,6 +305,7 @@ function initApp() {
                 $('input#image-data').val(localStorage.profileimg);
                 $('#ma-pimg').attr('src', localStorage.profileimg);
                 $('#my-profile img[data-details="profile-image"]').attr('src',localStorage.profileimg);
+                $('#profile-photo-img').attr('src', localStorage.profileimg);
             }
 
             $('input[name="' + profile[x].name + '"]').val(profile[x].value);
