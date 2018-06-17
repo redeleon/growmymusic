@@ -173,6 +173,17 @@ function initApp() {
         return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
     }
 
+    query_to_hash = function(queryString) {
+      var j, q;
+      q = queryString.replace(/\?/, "").split("&");
+      j = {};
+      $.each(q, function(i, arr) {
+        arr = arr.split('=');
+        return j[arr[0]] = arr[1];
+      });
+      return j;
+    }
+
     function saveProfile() {
         
         $('#profile-builder').fadeOut();
@@ -247,13 +258,15 @@ function initApp() {
         var completeQuery = "?id="+localStorage.id+"&type="+type+qString;
         console.log(completeQuery);
 
+        var data = query_to_hash(completeQuery);
         showLoader('syncing submission data to database');
 
-        var url = "https://script.google.com/macros/s/AKfycbz_AFWtWCC0nnoDd_DE2zzYsqg4V6Q7dQSxXwUnfWUwjJzi3rL-/exec?id=80&profile-name=rafael";
+        var url = "https://script.google.com/macros/s/AKfycbz_AFWtWCC0nnoDd_DE2zzYsqg4V6Q7dQSxXwUnfWUwjJzi3rL-/exec";
         var jqxhr = $.ajax({
-            url: url+completeQuery,
+            url: url,
             method: "GET",
             dataType: "json",
+            data: data
         }).success(function(result) {
             $('.loader').hide();
         });
