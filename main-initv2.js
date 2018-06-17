@@ -831,7 +831,9 @@ function initApp() {
                 partnersList();
                 var resString = JSON.stringify(data);
                 logErrors(user, "Log in successful! email:" + localStorage.user + " id:" + localStorage.id + "___data:" + resString);
+                
                 checkTrial(localStorage.id);
+                getProfile();
 
                 if (typeof(localStorage.slide) == "undefined"){
                     showSlider();
