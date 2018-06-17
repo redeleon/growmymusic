@@ -188,40 +188,47 @@ function initApp() {
         
         $('#profile-builder').fadeOut();
 
-        var x = 'data:image/jpeg;base64,' + localStorage.profileimg;
-        var y = dataURItoBlob(x);
+        var lpi = localStorage.profileimg;
+        if ( lpi.indexOf('growmymusic.com') > -1 ) {
+            logProfileDetails();
+        } else {
+            var x = 'data:image/jpeg;base64,' + localStorage.profileimg;
+            var y = dataURItoBlob(x);
 
-        var randomnum = generateSerial();
-        var randomjpg = randomnum+".jpg";
-        showLoader("uploading image");
+            var randomnum = generateSerial();
+            var randomjpg = randomnum+".jpg";
+            showLoader("uploading image");
 
-        var form = new FormData();
-        form.append("file", y, randomjpg);
-        form.append("action", "imagesave");
+            var form = new FormData();
+            form.append("file", y, randomjpg);
+            form.append("action", "imagesave");
 
-        var settings = {
-          "async": true,
-          "crossDomain": true,
-          "url": "https://growmymusic.com/wp-admin/admin-ajax.php",
-          "method": "POST",
-          "headers": {
-            "authorization": "Basic YnVubnlmaXNoY3JlYXRpdmVzOmJTRm5uQmVWb2IwU3A0Um9kUkhPeVFZYw==",
-            "cache-control": "no-cache"
-          },
-          "processData": false,
-          "contentType": false,
-          "mimeType": "multipart/form-data",
-          "data": form
+            var settings = {
+              "async": true,
+              "crossDomain": true,
+              "url": "https://growmymusic.com/wp-admin/admin-ajax.php",
+              "method": "POST",
+              "headers": {
+                "authorization": "Basic YnVubnlmaXNoY3JlYXRpdmVzOmJTRm5uQmVWb2IwU3A0Um9kUkhPeVFZYw==",
+                "cache-control": "no-cache"
+              },
+              "processData": false,
+              "contentType": false,
+              "mimeType": "multipart/form-data",
+              "data": form
+            }
+
+            $.ajax(settings).done(function (response) {
+              console.log(response);
+              var jsonresponse = JSON.parse(response);
+              localStorage.setItem('profileimg',jsonresponse.url);
+              $('input#image-data').val(jsonresponse.url);
+              $('.loader').hide();
+              logProfileDetails();
+            });
         }
 
-        $.ajax(settings).done(function (response) {
-          console.log(response);
-          var jsonresponse = JSON.parse(response);
-          localStorage.setItem('profileimg',jsonresponse.url);
-          $('input#image-data').val(jsonresponse.url);
-          $('.loader').hide();
-          logProfileDetails();
-        });
+        
 
     }
 
