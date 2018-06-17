@@ -3424,7 +3424,7 @@ function initApp() {
             showLoader("checking for existing profiles");
             getProfile();
             initProfileBtns();
-            $('#edit-profile').fadeIn();
+            $('#profile-builder').fadeIn();
         });
 
         $('button#t-close').click(function(){
