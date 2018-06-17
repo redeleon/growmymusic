@@ -646,6 +646,8 @@ function initApp() {
         console.log('session resumed');
         checkIfAlreadyLoggedIn();
         getActiveMc();
+        getSubmissionNumber()
+        getSubmittedMC();
         //window.location.reload();
     }
 
@@ -2959,8 +2961,47 @@ function initApp() {
                 }
             });
         }
+    }
 
-        
+    function getSubmittedMC(){
+        var id = localStorage.id;
+        var submitteditems = 0;
+        getSubmissionNumber();
+
+        $.getJSON('https://spreadsheets.google.com/feeds/list/1Xz76QH1Cq0s3gQrcpwQCJ-fHvjjz6SKOeTGL-CKBhb0/1/public/values?alt=json', function(data, xhr) {
+                console.log("mc tiles");
+                console.log('gdoc : ' + xhr);
+                console.log(data);
+                console.log('puling active mc from db');
+
+
+                if (xhr == 200 || xhr == "success") {
+                    var context = data.feed.entry;
+                    console.log(context);
+                    if (context != "undefined" || context != undefined){
+                        if (context.length > 0) {
+                             for (var i = 0; i < context.length; i++) {
+                                if (context[i].gsx$id.$t == id) {
+                                    if(context[i].gsx$submissionnumber.$t == localStorage.submissionnumber) {
+                                        var submissiontype = context[i].gsx$type.$t;
+                                        var parsesubmissiontype = submissiontype.replace("-","");
+                                        var submittedItem = "submitted"+parsesubmissiontype;
+                                        localStorage.setItem(submittedItem,"true");
+                                        submitteditems++;
+                                    }
+                                }
+                             }
+                        }
+                    }
+                    if(typeof(localStorage.activemc) != "undefined"){
+                        var active_mc = parseInt(localStorage.activemc) - submittedItem;
+                        if ( active_mc > 0) {
+                            localStorage.setItem('activemc',active_mc);
+                            getActiveMc();
+                        }
+                    }
+                }
+
     }
 
     function getSubmissionNumber(){
@@ -4317,6 +4358,7 @@ function initApp() {
 
     getActiveMc();
     getSubmissionNumber();
+    getSubmittedMC();
 
     //getResources();
     //getDmResources();
