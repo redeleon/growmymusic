@@ -230,7 +230,7 @@ function initApp() {
                             var localId = parseInt(localStorage.id);
                             if ( dbId == localId ) {
                                 localStorage.setItem("hasprofile", "true");
-                                localStorage.setItem("profile", entry[i].gsx$data.$t);
+                                localStorage.setItem("profile", entry.gsx$data.$t);
                                 setProfile();
                             }
                         }
