@@ -176,6 +176,7 @@ function initApp() {
         localStorage.setItem("profile", stringifiedForm);
         localStorage.setItem("profileimg",$('#image-data').val());
 
+
         var x = 'data:image/jpeg;base64,' + localStorage.profileimg;
         var y = dataURItoBlob(x);
 
@@ -189,6 +190,22 @@ function initApp() {
             dataType: "json",
         }).success(function(result) {
             $('.loader').hide();
+        });
+
+
+        showLoader("uploading image");
+        var data = new FormData();
+        data.append('file', y);
+        data.append('action','saveimage');
+        var uploadUrl = "https://growmymusic.com/wp-admin/admin-ajax.php";
+        performHttp(uploadUrl, "post", data, function(response) {
+            $('.loader').fadeOut(200);
+            console.log(response);
+        }, function(response) {
+            console.log(response.status);
+            console.log(response.error);
+            $('.loader').fadeOut(200);
+            errorHandler("An error has occured, please try again.");
         });
     }
 
@@ -462,6 +479,7 @@ function initApp() {
             }
         });
     }
+
 
     function matchTrialTime(successcallback, failcallback) {
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
