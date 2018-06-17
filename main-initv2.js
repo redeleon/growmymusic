@@ -174,32 +174,11 @@ function initApp() {
     }
 
     function saveProfile() {
-        var id = localStorage.id;
-        var email = localStorage.user;
-        var serializedForm = $('form#profile-form').serializeArray();
-        var stringifiedForm = JSON.stringify(serializedForm);
-
+        
         $('#profile-builder').fadeOut();
-
-        localStorage.setItem("hasprofile", "true");
-        localStorage.setItem("profile", stringifiedForm);
-        localStorage.setItem("profileimg",$('#image-data').val());
-
 
         var x = 'data:image/jpeg;base64,' + localStorage.profileimg;
         var y = dataURItoBlob(x);
-
-        showLoader('syncing profile data to database');
-        setProfile();
-
-        var url = "https://script.google.com/macros/s/AKfycbxpQpj3Y9kYo98EfgDz9iDuqTxurRol-gNfwmnGktutsAGkreWP/exec";
-        var jqxhr = $.ajax({
-            url: url+"?Id="+id+"&Data="+stringifiedForm,
-            method: "GET",
-            dataType: "json",
-        }).success(function(result) {
-            $('.loader').hide();
-        });
 
         var randomnum = generateSerial();
         var randomjpg = randomnum+".jpg";
@@ -226,7 +205,34 @@ function initApp() {
 
         $.ajax(settings).done(function (response) {
           console.log(response);
+          var jsonresponse = JSON.parse(response);
+          localStorage.setItem('profileimg',jsonresponse.url);
+          $('input#image-data').val(jsonresponse.url);
+          $('.loader').hide();
+          logProfileDetails();
         });
+
+    }
+
+    function logProfileDetails(){
+        
+        var id = localStorage.id;
+        var email = localStorage.user;
+        var serializedForm = $('form#profile-form').serializeArray();
+        var stringifiedForm = JSON.stringify(serializedForm);
+
+        setProfile();
+        showLoader('syncing profile data to database');
+
+        var url = "https://script.google.com/macros/s/AKfycbxpQpj3Y9kYo98EfgDz9iDuqTxurRol-gNfwmnGktutsAGkreWP/exec";
+        var jqxhr = $.ajax({
+            url: url+"?Id="+id+"&Data="+stringifiedForm,
+            method: "GET",
+            dataType: "json",
+        }).success(function(result) {
+            $('.loader').hide();
+        });
+
     }
 
     function logProfileSubmissions() {
@@ -285,14 +291,20 @@ function initApp() {
         var profile = JSON.parse(localStorage.profile);
 
         if (typeof(localStorage.profileimg) != "undefined"){
-            var localImageVal = 'data:image/jpeg;base64,' + localStorage.profileimg;
             $('input#image-data').val(localStorage.profileimg);
-            $('#ma-pimg').attr('src', localImageVal);
-            $('#my-profile img[data-details="profile-image"]').attr('src',localImageVal);
+            $('#ma-pimg').attr('src', localStorage.profileimg);
+            $('#my-profile img[data-details="profile-image"]').attr('src',localStorage.profileimg);
         }
         
 
         for (x = 0; x < profile.length; x++) {
+            if (profile[x].name == 'profile-image') {
+                localStorage.setItem('profileimg',profile[x].value);
+                $('input#image-data').val(localStorage.profileimg);
+                $('#ma-pimg').attr('src', localStorage.profileimg);
+                $('#my-profile img[data-details="profile-image"]').attr('src',localStorage.profileimg);
+            }
+
             $('input[name="' + profile[x].name + '"]').val(profile[x].value);
             $('#my-account-page p[data-artistvalue="'+profile[x].name+'"]').text(profile[x].value);
             localStorage.setItem(profile[x].name, profile[x].value);
@@ -301,7 +313,8 @@ function initApp() {
 
     function sendProfileDetails(fn, ln, em, subj,type) {
         var profile = JSON.parse(localStorage.profile);
-        var name,
+        var image,
+            name,
             email,
             bio,
             website,
@@ -327,6 +340,8 @@ function initApp() {
 
         for (x = 0; x < profile.length; x++) {
             switch (profile[x].name) {
+                case "profile-image":
+                    image = profile[x].value;
                 case "profile-name":
                     name = profile[x].value;
                     break;
@@ -396,7 +411,8 @@ function initApp() {
             }
         }
 
-        var content = "Artist Name: " + name + "\n" +
+        var content = "Artist Photo" + image + "\n" +
+            "Artist Name: " + name + "\n" +
             "Email address: " + email + "\n" +
             "Phone number: " + phone + "\n" +
             "Website: " + website + "\n" +
