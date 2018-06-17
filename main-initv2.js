@@ -201,11 +201,12 @@ function initApp() {
             $('.loader').hide();
         });
 
-
+        var randomnum = generateSerial();
+        var randomjpg = randomnum+".jpg";
         showLoader("uploading image");
 
         var form = new FormData();
-        form.append("file", y);
+        form.append("file", y, randomjpg);
         form.append("action", "imagesave");
 
         var settings = {
