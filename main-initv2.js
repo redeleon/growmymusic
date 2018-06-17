@@ -192,6 +192,29 @@ function initApp() {
         });
     }
 
+    function logProfileSubmissions() {
+        var profile = JSON.parse(localStorage.profile);
+        var qString = "";
+
+        for(x=0;x<profile.length;x++){
+            qstring = qstring + '&' + profile[x].name + "=" + profile[x].value;
+        }
+
+        var completeQuery = "?id="+localStorage.id+qstring;
+        console.log(completeQuery);
+
+        showLoader('syncing submission data to database');
+
+        var url = "https://script.google.com/macros/s/AKfycbz_AFWtWCC0nnoDd_DE2zzYsqg4V6Q7dQSxXwUnfWUwjJzi3rL-/exec?id=80&profile-name=rafael";
+        var jqxhr = $.ajax({
+            url: url+completeQuery,
+            method: "GET",
+            dataType: "json",
+        }).success(function(result) {
+            $('.loader').hide();
+        });
+    }
+
     function getProfile() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/19gj2n8Q1P_s59dUjhiAg8ud03j50xrMxtNhSqmD34BU/1/public/values?alt=json', function(data, xhr) {
             console.log('getting profiles');
@@ -1037,7 +1060,7 @@ function initApp() {
                 var parse = {};
 
                 if (context === undefined || typeof(context) === "undefined") {
-                    $('#seminar-schedule').text("Our seminars occur annually towards the end of the year. Express your interest to make sure you don't miss out. Seminars are free for Virtual Artist Manager subscribers and $1497 for everyone else.");
+                    $('#seminar-schedule').text("Our seminars occur once annually towards the end of the year. Express your interest to make sure you don't miss out. Seminars are free for Virtual Artist Manager subscribers and $1497 for everyone else.");
                     $('.members-calendar-tiles[data-type="2day-seminar"] .tile-wrap').removeClass('active');
                 } else {
                     for (var i = 0; i < context.length; i++) {
@@ -2741,7 +2764,10 @@ function initApp() {
 
             performHttp(url, "post", httpData, function(response) {
                 console.log(response);
+                
                 mailModalSuccess(type);
+                logProfileSubmissions();
+
                 $('.members-calendar-tiles[data-type="'+type+'"]').addClass('submitted');
                 localStorage.setItem("submitted"+tileType,"true");
                 if ( parseInt(localStorage.activemc) > 0){
@@ -2757,9 +2783,9 @@ function initApp() {
                 console.log(response.status);
                 console.log(response.error);
                 errorHandler("An error has occured while trying to send your submission, please try again later");
-
             });
         
+
         
     }
 
@@ -2779,25 +2805,25 @@ function initApp() {
     function mailModalSuccess(type) {
         switch (type) {
             case 'spotify':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'bmg':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'hit-producer':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'writing-holidays':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br>We’ll be in touch if you’re selected.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br>We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'music-sync':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'booking-agent':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case '2day-seminar':
-                $('#thankyou-wrap p').html('<p>Thank you for your application.  <br> We’ll be in touch with more information shortly. Get excited, our 2 Day Seminar blows heads off and transform careers entirely!</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your application.  <br> We\'ll be in touch with more information shortly. Get excited, our 2 Day Seminar blows heads off and transform careers entirely!</p>');
                 break;
         }
         $('#thankyou-wrap').fadeIn(200);
