@@ -164,6 +164,15 @@ function initApp() {
         return bb;
     }
 
+    function dataURItoBlob(dataURI) {
+        var binary = atob(dataURI.split(',')[1]);
+        var array = [];
+        for(var i = 0; i < binary.length; i++) {
+            array.push(binary.charCodeAt(i));
+        }
+        return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+    }
+
     function saveProfile() {
         var id = localStorage.id;
         var email = localStorage.user;
@@ -194,18 +203,28 @@ function initApp() {
 
 
         showLoader("uploading image");
-        var data = new FormData();
-        data.append('file', y);
-        data.append('action','saveimage');
-        var uploadUrl = "https://growmymusic.com/wp-admin/admin-ajax.php";
-        performHttp(uploadUrl, "post", data, function(response) {
-            $('.loader').fadeOut(200);
-            console.log(response);
-        }, function(response) {
-            console.log(response.status);
-            console.log(response.error);
-            $('.loader').fadeOut(200);
-            errorHandler("An error has occured, please try again.");
+
+        var form = new FormData();
+        form.append("file", y);
+        form.append("action", "imagesave");
+
+        var settings = {
+          "async": true,
+          "crossDomain": true,
+          "url": "https://growmymusic.com/wp-admin/admin-ajax.php",
+          "method": "POST",
+          "headers": {
+            "authorization": "Basic YnVubnlmaXNoY3JlYXRpdmVzOmJTRm5uQmVWb2IwU3A0Um9kUkhPeVFZYw==",
+            "cache-control": "no-cache"
+          },
+          "processData": false,
+          "contentType": false,
+          "mimeType": "multipart/form-data",
+          "data": form
+        }
+
+        $.ajax(settings).done(function (response) {
+          console.log(response);
         });
     }
 
@@ -3479,7 +3498,7 @@ function initApp() {
         $('#take-photo').click(function() {
             navigator.camera.getPicture(onSuccessImage, onFailImage, {
                 quality: 20,
-                destinationType: Camera.DestinationType.DATA_URL,
+                destinationType: Camera.DestinationType.FILE,
                 targetWidth: 600,
                 targetHeight:600,
                 correctOrientation: true
