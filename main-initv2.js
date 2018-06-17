@@ -236,7 +236,7 @@ function initApp() {
 
     }
 
-    function logProfileSubmissions() {
+    function logProfileSubmissions(type) {
         var profile = JSON.parse(localStorage.profile);
         var qString = "";
 
@@ -244,7 +244,7 @@ function initApp() {
             qstring = qstring + '&' + profile[x].name + "=" + profile[x].value;
         }
 
-        var completeQuery = "?id="+localStorage.id+qstring;
+        var completeQuery = "?id="+localStorage.id+"&type="+type+qstring;
         console.log(completeQuery);
 
         showLoader('syncing submission data to database');
@@ -2820,7 +2820,7 @@ function initApp() {
             "MSFSubject": subject,
             "MSFMessage": message,
         };
-
+        var subtype = type;
         showLoader();
 
 
@@ -2828,7 +2828,7 @@ function initApp() {
                 console.log(response);
                 
                 mailModalSuccess(type);
-                logProfileSubmissions();
+                logProfileSubmissions(subtype);
 
                 $('.members-calendar-tiles[data-type="'+type+'"]').addClass('submitted');
                 localStorage.setItem("submitted"+tileType,"true");
