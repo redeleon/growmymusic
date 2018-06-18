@@ -2843,6 +2843,7 @@ function initApp() {
                 for (var i = 0; i < context.length; i++) {
                     switch (context[i].gsx$section.$t) {
                         case "BMG":
+                        case "Record Labels / Publishers":
                             $('.members-calendar-tiles[data-type="bmg"]').attr('data-url', context[i].gsx$link.$t);
                             break;
                         case "Music Sync":
@@ -2939,9 +2940,11 @@ function initApp() {
     function mailModalSuccess(type) {
         switch (type) {
             case 'spotify':
+            case "Streaming Services":
                 $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'bmg':
+            case 'Record Labels / Publishers':
                 $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'hit-producer':
@@ -3098,6 +3101,7 @@ function initApp() {
                     switch (context[i].gsx$name.$t) {
                         
                         case "Streaming Services":
+                        case "Spotify":
                             $('.members-calendar-tiles[data-type="spotify"]').attr('data-msg', context[i].gsx$message.$t);
                             if (context[i].gsx$status.$t === "A") {
                                 $('.members-calendar-tiles[data-type="spotify"] .tile-wrap').removeClass('locked').addClass('active');
@@ -3109,6 +3113,7 @@ function initApp() {
                             }
                             break;
                         case "Record Labels / Publishers":
+                        case "BMG":
                             $('.members-calendar-tiles[data-type="bmg"]').attr('data-msg', context[i].gsx$message.$t);
                             if (context[i].gsx$status.$t === "A") {
                                 $('.members-calendar-tiles[data-type="bmg"] .tile-wrap').removeClass('locked').addClass('active');
