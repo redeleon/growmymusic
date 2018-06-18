@@ -926,6 +926,7 @@ function initApp() {
                 
                 checkTrial(localStorage.id);
                 getProfile();
+                getSubmittedMC();
 
                 if (typeof(localStorage.slide) == "undefined"){
                     showSlider();
