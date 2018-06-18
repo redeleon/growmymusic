@@ -1757,6 +1757,8 @@ function initApp() {
                 var html = '';
                 var parse = {};
 
+                $('#partners-items .list-con').empty();
+
                 for (var i = 0; i < context.length; i++) {
                     html = html.concat(template(context[i]));
                 }
@@ -1947,6 +1949,7 @@ function initApp() {
                                         html = html.concat(template(context[i]));
                                     }
 
+                                    $('#partners-items .list-con').empty();
                                     $('#partners-items .list-con').append(html);
                                     $('.list-view').fadeIn(200);
 
