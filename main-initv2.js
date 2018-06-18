@@ -29,6 +29,14 @@ function initApp() {
         localStorage.removeItem("activemc");
     }
 
+    function checkLocalStorageIfHasValue(storage){
+        if (typeof(storage) != "undefined"){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     function getMobileOperatingSystem() {
         var userAgent = navigator.userAgent || navigator.vendor || window.opera;
         if (/windows phone/i.test(userAgent)) {
@@ -188,7 +196,7 @@ function initApp() {
         
         $('#profile-builder').fadeOut();
         var lpi;
-        if(typeof(localStorage.profileimg != "undefined")){
+        if( typeof(localStorage.profileimg) != "undefined" ){
             lpi = localStorage.profileimg;
             if ( lpi.indexOf('growmymusic.com') > -1 ) {
                 logProfileDetails();
