@@ -6,38 +6,120 @@ var iapList = [];
 var iapPurchased = [];
 var scriptPath = "";
 var testMode = false;
+var activeMC = 0;
 
 function initApp() {
-    var os = getMobileOperatingSystem();
-    var apiLink = "https://growmymusic.com";
-    var testMode = false;
-    var allCouponsLoaded = 0;
-    var inAppBrowserRef;
-    var iapList = [];
-    var iapPurchased = [];
+    var style = document.createElement('link');
+    style.rel = 'stylesheet';
+    style.href = 'https://cdn.rawgit.com/redeleon/growmymusic/master/gmm-overridesv2.css';
+    document.body.appendChild(style);
+    $('.coupon-tab[data-loc="mb-dc-items"] p').text("One Time")
+
+    function showLoader(text) {
+        $('.loader').fadeIn();
+        $('.loader .loader-message').text(text);
+    }
+
+    function resetMC(){
+        localStorage.removeItem("submittedspotify");
+        localStorage.removeItem("submittedwritingholidays");
+        localStorage.removeItem("submittedbookingagent");
+        localStorage.removeItem("submittedbmg");
+        localStorage.removeItem("submittedmusicsync");
+        localStorage.removeItem("activemc");
+    }
+
+    function checkLocalStorageIfHasValue(storage){
+        if (typeof(storage) != "undefined"){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function getMobileOperatingSystem() {
+        var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        if (/windows phone/i.test(userAgent)) {
+            return "windowsphone";
+        }
+        if (/android/i.test(userAgent)) {
+            return "android";
+        }
+        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+            return "ios";
+        }
+    }
 
     $('body').addClass(getMobileOperatingSystem());
+    os = getMobileOperatingSystem();
 
     if (cordova) {
         screen.orientation.lock('portrait');
     }
 
     var shareoptions = {
-        message: 'Being as into music as you are, you should check out Grow My Music. I back it hard! http://www.growmymusic.com', 
+        message: 'Being a muso, you should check out Grow My Music\'s Virtual Artist Manager App. It\'s amazing! http://www.growmymusic.com',
         subject: 'Check out Grow My Music!',
         chooserTitle: 'Share via'
-    }
+    };
     var shareonSuccess = function(result) {
         console.log("Share completed? " + result.completed);
         console.log("Shared to app: " + result.app);
-    }
+    };
     var shareonError = function(msg) {
         console.log("Sharing failed with message: " + msg);
+    };
+
+    function unlockTrialPeriod() {
+        $('#facebookgroup').removeClass('locked');
+        $('#memberscalendar').removeClass('locked');
+        $('#membersdiscount').removeClass('locked');
+    }
+
+    function lockAllTiles() {
+        $('body').addClass('locked');
+        $('#modules').addClass('locked');
+        $('#masterclass').addClass('locked');
+        $('#facebookgroup').addClass('locked');
+        $('#resources').addClass('locked');
+        $('#memberscalendar').addClass('locked');
+        $('#membersdiscount').addClass('locked');
+
+        $('#vam-tile-main').hide();
+    }
+
+    function unlockVam() {
+        console.log('Virtual Artist Manager');
+        $('#facebookgroup').removeClass('locked');
+        $('#memberscalendar').removeClass('locked');
+        $('#membersdiscount').removeClass('locked');
+
+        $('body').addClass('vam');
+        $('body').removeClass('trial-period');
+    }
+
+    function unlockDm() {
+        console.log('Digital Marketing');
+        $('#digitalmarketing').removeClass('locked');
+        $('#vam-tile-main').hide();
+        $('body').addClass('dm');
+    }
+
+    function unlockCourses() {
+        console.log('Full Access');
+        $('#vam-tile-main').hide();
+        $('body').removeClass('locked');
+        $('#modules').removeClass('locked');
+        $('#masterclass').removeClass('locked');
+        $('#facebookgroup').removeClass('locked');
+        $('#resources').removeClass('locked');
+        $('body').addClass('fa');
+        unlockVam();
     }
 
     function logTrial(id) {
+        showLoader("Registering Trial Account");
 
-        $('.loader').fadeIn();
         localStorage.setItem("firstuse", "true");
 
         getServerTime(function(response) {
@@ -68,11 +150,347 @@ function initApp() {
             $('#firstuse-video-mp4').attr('src', '');
             $('#first-use').fadeOut(200);
         });
+    }
 
+    function dataURItoBlob(dataURI, callback) {
+        // convert base64 to raw binary data held in a string
+        // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+        var byteString = atob(dataURI.split(',')[1]);
+
+        // separate out the mime component
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+        // write the bytes of the string to an ArrayBuffer
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+
+        // write the ArrayBuffer to a blob, and you're done
+        var bb = new Blob([ab]);
+        return bb;
+    }
+
+    function dataURItoBlob(dataURI) {
+        var binary = atob(dataURI.split(',')[1]);
+        var array = [];
+        for(var i = 0; i < binary.length; i++) {
+            array.push(binary.charCodeAt(i));
+        }
+        return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+    }
+
+    query_to_hash = function(queryString) {
+      var j, q;
+      q = queryString.replace(/\?/, "").split("&");
+      j = {};
+      $.each(q, function(i, arr) {
+        arr = arr.split('=');
+        return j[arr[0]] = arr[1];
+      });
+      return j;
+    }
+
+    function saveProfile() {
+        
+        $('#profile-builder').fadeOut();
+        var lpi;
+        if( typeof(localStorage.profileimg) != "undefined" ){
+            lpi = localStorage.profileimg;
+            if ( lpi.indexOf('growmymusic.com') > -1 ) {
+                logProfileDetails();
+            }
+        } else {
+            var imageData = $('#image-data').val();
+            var x = 'data:image/jpeg;base64,' + imageData;
+            var y = dataURItoBlob(x);
+
+            var randomnum = generateSerial();
+            var randomjpg = randomnum+".jpg";
+            showLoader("uploading image");
+
+            var form = new FormData();
+            form.append("file", y, randomjpg);
+            form.append("action", "imagesave");
+
+            var settings = {
+              "async": true,
+              "crossDomain": true,
+              "url": "https://growmymusic.com/wp-admin/admin-ajax.php",
+              "method": "POST",
+              "headers": {
+                "authorization": "Basic YnVubnlmaXNoY3JlYXRpdmVzOmJTRm5uQmVWb2IwU3A0Um9kUkhPeVFZYw==",
+                "cache-control": "no-cache"
+              },
+              "processData": false,
+              "contentType": false,
+              "mimeType": "multipart/form-data",
+              "data": form
+            }
+
+            $.ajax(settings).done(function (response) {
+              console.log(response);
+              var jsonresponse = JSON.parse(response);
+              localStorage.setItem('profileimg',jsonresponse.url);
+              $('input#image-data').val(jsonresponse.url);
+              $('.loader').hide();
+              logProfileDetails();
+            });
+        }
+
+        
+
+    }
+
+    function logProfileDetails(){
+        $('#image-data').removeAttr('disabled');
+        var id = localStorage.id;
+        var email = localStorage.user;
+        var serializedForm = $('form#profile-form').serializeArray();
+        var stringifiedForm = JSON.stringify(serializedForm);
+        localStorage.setItem('profile',stringifiedForm);
+
+        setProfile();
+        showLoader('syncing profile data to database');
+
+        var url = "https://script.google.com/macros/s/AKfycbxpQpj3Y9kYo98EfgDz9iDuqTxurRol-gNfwmnGktutsAGkreWP/exec";
+        var jqxhr = $.ajax({
+            url: url+"?Id="+id+"&Data="+stringifiedForm,
+            method: "GET",
+            dataType: "json",
+        }).success(function(result) {
+            $('.loader').hide();
+        });
+
+    }
+
+    function logProfileSubmissions(type) {
+        var profile = JSON.parse(localStorage.profile);
+        var qString = "";
+
+        for(x=0;x<profile.length;x++){
+            qString = qString + '&' + profile[x].name + "=" + profile[x].value;
+        }
+
+        var completeQuery = "?id="+localStorage.id+"&type="+type+qString;
+        console.log(completeQuery);
+
+        var data = query_to_hash(completeQuery);
+        showLoader('syncing submission data to database');
+
+        var url = "https://script.google.com/macros/s/AKfycbz_AFWtWCC0nnoDd_DE2zzYsqg4V6Q7dQSxXwUnfWUwjJzi3rL-/exec";
+        var jqxhr = $.ajax({
+            url: url,
+            method: "GET",
+            dataType: "json",
+            data: data
+        }).success(function(result) {
+            $('.loader').hide();
+        });
+    }
+
+    function getProfile() {
+        $.getJSON('https://spreadsheets.google.com/feeds/list/19gj2n8Q1P_s59dUjhiAg8ud03j50xrMxtNhSqmD34BU/1/public/values?alt=json', function(data, xhr) {
+            console.log('getting profiles');
+            console.log('profiles : ' + xhr);
+            if (xhr == 200 || xhr == "success") {
+                var entries = data.feed.entry;
+                console.log(entries);
+                if(entries != undefined) {
+                   if (entries.length > 0) {
+                        for (var i = 0; i < entries.length; i++) {
+                            var entry = entries[i];
+                            var dbId = parseInt(entry.gsx$id.$t);
+                            var localId = parseInt(localStorage.id);
+                            if ( dbId == localId ) {
+                                localStorage.setItem("hasprofile", "true");
+                                localStorage.setItem("profile", entry.gsx$data.$t);
+                                setProfile();
+                            }
+                        }
+                    } 
+                }
+                $('.loader').fadeOut(200);
+            } else {
+                $('.loader').fadeOut(200);
+                errorHandler("An error has occured while syncing your profile data, please try again.");
+            }
+        });
+    }
+
+    function setProfile() {
+        var profile = JSON.parse(localStorage.profile);
+
+        if (typeof(localStorage.profileimg) != "undefined"){
+            $('input#image-data').val(localStorage.profileimg);
+            $('#ma-pimg').attr('src', localStorage.profileimg);
+            $('#my-profile img[data-details="profile-image"]').attr('src',localStorage.profileimg);
+            $('#profile-photo-img').attr('src', localStorage.profileimg);
+        }
+        
+
+        for (x = 0; x < profile.length; x++) {
+            if (profile[x].name == 'profile-image') {
+                localStorage.setItem('profileimg',profile[x].value);
+                $('input#image-data').val(localStorage.profileimg);
+                $('#ma-pimg').attr('src', localStorage.profileimg);
+                $('#my-profile img[data-details="profile-image"]').attr('src',localStorage.profileimg);
+                $('#profile-photo-img').attr('src', localStorage.profileimg);
+            }
+
+            $('input[name="' + profile[x].name + '"]').val(profile[x].value);
+            $('#my-account-page p[data-artistvalue="'+profile[x].name+'"]').text(profile[x].value);
+            localStorage.setItem(profile[x].name, profile[x].value);
+        }
+    }
+
+    function sendProfileDetails(fn, ln, em, subj,type) {
+        var profile = JSON.parse(localStorage.profile);
+        var image,
+            name,
+            email,
+            bio,
+            website,
+            email,
+            country,
+            state,
+            city,
+            phone,
+            facebook,
+            twitter,
+            instagram,
+            soundcloud,
+            youtube,
+            mp3,
+            genre,
+            othergenre,
+            spotify,
+            spotifycowriters,
+            spotifycontribution,
+            apple,
+            applecowriters,
+            applecontribution;
+
+        for (x = 0; x < profile.length; x++) {
+            switch (profile[x].name) {
+                case "profile-image":
+                    image = profile[x].value;
+                case "profile-name":
+                    name = profile[x].value;
+                    break;
+                case "profile-bio":
+                    bio = profile[x].value;
+                    break;
+                case "profile-website":
+                    website = profile[x].value;
+                    break;
+                case "profile-email":
+                    email = profile[x].value;
+                    break;
+                case "profile-country":
+                    country = profile[x].value;
+                    break;
+                case "profile-city":
+                    city = profile[x].value;
+                    break;
+                case "profile-state":
+                    state = profile[x].value;
+                    break;
+                case "profile-number":
+                    phone = profile[x].value;
+                    break;
+                case "profile-facebok":
+                    facebok = "http://www.facebook.com/"+profile[x].value;
+                    break;
+                case "profile-twitter":
+                    twitter = "http://www.twitter.com/"+profile[x].value;
+                    break;
+                case "profile-instagram":
+                    instagram = "http://www.instagram.com/"+profile[x].value;
+                    break;
+                case "profile-youtube":
+                    youtube = "http://www.youtube.com/"+profile[x].value;
+                    break;
+                case "profile-soundcloud":
+                    soundcloud = "http://www.soundcloud.com/"+profile[x].value;
+                    break;
+                case "profile-mp3":
+                    mp3 = profile[x].value;
+                    break;
+                case "profile-genre":
+                    genre = profile[x].value;
+                    break;
+                case "profile-other-genre":
+                    othergenre = profile[x].value;
+                    break;
+                case "profile-spotify":
+                    spotify = profile[x].value;
+                    break;
+                case "profile-spotify-cowriters":
+                    spotifycowriters = profile[x].value;
+                    break;
+                case "profile-spotify-contribution":
+                    spotifycontribution = profile[x].value;
+                    break;
+                case "profile-appl-cowriters":
+                    apple = profile[x].value;
+                    break;
+                case "profile-appl-cowriters-cowriters":
+                    applecowriters = profile[x].value;
+                    break;
+                case "profile-appl-cowriters-contribution":
+                    applecontribution = profile[x].value;
+                    break;
+            }
+        }
+
+        var content = "Artist Photo" + image + "\n" +
+            "Artist Name: " + name + "\n" +
+            "Email address: " + email + "\n" +
+            "Phone number: " + phone + "\n" +
+            "Website: " + website + "\n" +
+            "Country: " + country + "\n" +
+            "State: " + state + "\n" +
+            "City: " + city + "\n" +
+            "Facebook: " + facebook + "\n" +
+            "Instagram: " + instagram + "\n" +
+            "Soundcloud: " + soundcloud + "\n" +
+            "Youtube: " + youtube + "\n" +
+            "Mp3 Download Link: " + mp3 + "\n" +
+            "Genre: " + genre + "\n" +
+            "Other Genre: " + othergenre + "\n" +
+            "Spotify Best Track: " + spotify + "\n" +
+            "What did you write in this song? (Spotify): " + spotifycontribution + "\n" +
+            "Number of Co-writers (Spotify): " + spotifycowriters + "\n" +
+            "Apple Music Best Track: " + apple + "\n" +
+            "What did you write in this song? (Apple Music): " + applecontribution + "\n" +
+            "Number of Co-writers (Apple Music): " + applecowriters + "\n";
+
+
+        sendMembershipCalendarMail(fn, ln, em, subj, content,type)
+
+    }
+
+    function initProfileBtns() {
+        $('button#save-profile').click(function() {
+            saveProfile();
+        });
+
+        $('button#edit-profile-btn').click(function() {
+            $('#my-profile').fadeOut();
+            $('#edit-profile').fadeIn();
+            $('input[name="profile-email"]').val(localStorage.user);
+        });
+
+        $('#close-profile').click(function() {
+            $('#profile-builder').fadeOut();
+        });
     }
 
     function checkTrial(id) {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1lMry_8Cm_mFlTRQ-af05o31Ud0Dpv41KHgqHDV7emCM/1/public/values?alt=json', function(data, xhr) {
+            console.log('check trial');
             console.log('gdoc : ' + xhr);
             if (xhr == 200 || xhr == "success") {
                 var entries = data.feed.entry;
@@ -86,7 +504,7 @@ function initApp() {
                             console.log('trial period in account');
                             console.log(entryDate);
                             $('body').addClass('trial-period');
-
+                            $('#trial').show();
                             $('#facebookgroup').removeClass('locked');
                             $('#memberscalendar').removeClass('locked');
                             $('#membersdiscount').removeClass('locked');
@@ -107,7 +525,7 @@ function initApp() {
                                     $('#facebookgroup').addClass('locked');
                                     $('#memberscalendar').addClass('locked');
                                     $('#membersdiscount').addClass('locked');
-                                    $('#trial p').html("Virtual Artist Manager - Free Trial<br>has ended, register now to gain access!")
+                                    $('#trial').hide();
                                 } else {
                                     var x = trialend - parseDate;
                                     var seconds = Math.floor(x / 1000);
@@ -119,7 +537,7 @@ function initApp() {
                                     console.log(day + ' days left');
                                     $('.trial-days').text(day + "days left");
                                 }
-                            })
+                            });
                         }
 
                     }
@@ -131,6 +549,7 @@ function initApp() {
             }
         });
     }
+
 
     function matchTrialTime(successcallback, failcallback) {
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
@@ -144,10 +563,9 @@ function initApp() {
         }, function(response) {
             console.log(response.status);
             console.log(response.error);
-            $('.loader-message').text('');
             $('.loader').fadeOut(200);
             errorHandler("An error has occured, please try again.");
-        })
+        });
     }
 
     function getServerTime(callback, failcallback) {
@@ -163,15 +581,16 @@ function initApp() {
             console.log(response.status);
             console.log(response.error);
             failcallback(response);
-            $('.loader-message').text('');
             $('.loader').fadeOut(200);
             errorHandler("An error has occured, please try again.");
-        })
+        });
     }
 
     function checkFirstUse() {
-        if (localStorage.firstuse != "true") {
+        if (typeof(localStorage.firstuse) == "undefined" || localStorage.firstuse !== "true") {
             openFirstUse();
+        } else {
+            $('#first-use').hide();
         }
     }
 
@@ -195,7 +614,7 @@ function initApp() {
         vid.load();
         $('video#firstuse-video').click(function() {
             playPauseFirstUse();
-        })
+        });
     }
 
     function playPauseFirstUse() {
@@ -207,40 +626,83 @@ function initApp() {
     }
 
     function openFirstUse() {
-        var vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/vampromolongupdated.mp4"
+        var vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/vampromolongupdated.mp4";
         removeAllVideos();
         setFirstUseVideo(vurl);
         localStorage.setItem("firstuse", "true");
 
-        setTimeout(function(){
+        setTimeout(function() {
             $('#first-use').fadeIn(200);
-        },1500);
-        
+        }, 1500);
+
         $('#first-use button.get-started').click(function(e) {
             removeAllVideos();
             $('#firstuse-video-mp4').attr('src', '');
             $('#first-use').fadeOut(200);
-            localStorage.setItem("firstuse", "true");
-        })
+            localStorage.setItem("firstuse", "false");
+        });
         $('#first-use').click(function(e) {
             if (e.target != this) {
                 return false;
             } else {
                 removeAllVideos();
-                localStorage.setItem("firstuse", "true");
+                localStorage.setItem("firstuse", "false");
                 $('#firstuse-video-mp4').attr('src', '');
                 $('#first-use').fadeOut(200);
             }
-        })
+        });
     }
 
     function returnedFromPause() {
         console.log('session resumed');
         checkIfAlreadyLoggedIn();
+        getActiveMc();
+        getSubmissionNumber()
+        getSubmittedMC();
+        //window.location.reload();
+    }
+
+    function getAds(){
+        $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/13/public/values?alt=json', function(data, xhr) {
+            console.log("registered iap");
+            console.log('gdoc : ' + xhr);
+            console.log(data);
+
+            if (xhr == 200 || xhr == "success") {
+                var context = data.feed.entry;
+                console.log(context);
+                $('#ads ul').empty();
+                if (context.length > 0) {
+                    for (var i = 0; i < context.length; i++) {
+                        $('#ads ul').append('<li><a data-url="'+context[i].gsx$link.$t+'" class="epage"><img src="'+context[i].gsx$bannerimageurl.$t+'"></a></li>')
+                    }
+                    $('#ads').show();
+                    $('#ads ul').slick({
+                            arrows: false,
+                            dots: false,
+                            infinite: true,
+                            autoplay: true,
+                            speed: 1000,
+                            autoplaySpeed: 10000
+                    });
+                    $('#ads .epage').each(function() {
+                        $(this).click(function(e) {
+                            var url = $(this).attr('data-url');
+                            browser(url);
+                        });
+                    });
+                }
+                
+            } else {
+                $('.loader').fadeOut(200);
+                errorHandler("An error has occured while trying to access in app purchases database.");
+            }
+        });
     }
 
     function registeredIAP() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/7/public/values?alt=json', function(data, xhr) {
+            console.log("registered iap");
             console.log('gdoc : ' + xhr);
             console.log(data);
 
@@ -271,6 +733,9 @@ function initApp() {
                 errorHandler("error while doing http get, status: " + response.status + " error: " + response.error);
                 console.log("error while doing http post, status: " + response.status + " error: " + response.error);
                 failCallback(response);
+
+                var errorString = JSON.stringify(response);
+                logErrors(localStorage.user, errorString);
             });
         }
         if (method == "get") {
@@ -281,99 +746,92 @@ function initApp() {
                 successCallback(response);
             }, function(response) {
                 $('.loader').fadeOut(200);
+
                 errorHandler("error while doing http get, status: " + response.status + " error: " + response.error);
                 console.log("error while doing http get, status: " + response.status + " error: " + response.error);
                 failCallback(response);
+
+                var errorString = JSON.stringify(response);
+                logErrors(localStorage.user, errorString);
             });
         }
     }
 
+    function logErrors(id, error) {
+        var system = getMobileOperatingSystem();
+        var url = "https://script.google.com/macros/s/AKfycbyVzHfMvstCBWqxvyrkl7rTGdHHmLB1K2_7wI95OJNoyDL-NOg/exec"
+        var parseUrl = url + "?Id=" + id + "&Error=" + error + "&Os=" + system;
+        var jqxhr = $.ajax({
+            url: parseUrl,
+            method: "GET",
+            dataType: "json"
+        }).success(function() {
+            console.log('errors logged');
+        });
+    }
+
     function checkIfAlreadyLoggedIn() {
-        if (localStorage.user && localStorage.pass) {
+        if (typeof(localStorage.id) != "undefined") {
             $('.main-content-container').show();
 
+            showLoader("Welcome back " + localStorage.firstname + "!");
+            
             $('.first-page').fadeOut(500);
             $('.login-page').fadeOut(500);
             setTimeout(function() {
                 $('.first-page').remove();
                 $('.login-page').remove();
-            }, 500)
+            }, 500);
 
 
-            if (localStorage.membership == "undefined" || localStorage.membership == undefined) {
-                $('body').addClass('locked');
-                $('#modules').addClass('locked');
-                $('#masterclass').addClass('locked');
-                $('#facebookgroup').addClass('locked');
-                $('#resources').addClass('locked');
-                $('#memberscalendar').addClass('locked');
-                $('#membersdiscount').addClass('locked');
+            if (typeof(localStorage.usermembershipids) == "undefined") {
+                lockAllTiles();
             } else {
                 var umList = localStorage.usermembershipids.split(",");
-
-                if ($.inArray('778', umList) > -1 ||
-                    $.inArray('777', umList) > -1 ||
-                    $.inArray('945', umList) > -1) {
-                    console.log('Virtual Artist Manager');
-                    $('#facebookgroup').removeClass('locked');
-                    $('#memberscalendar').removeClass('locked');
-                    $('#membersdiscount').removeClass('locked');
-
-                    // $('#digitalmarketing').removeClass('locked');
-                    // $('body').removeClass('locked');
-                    // $('#modules').removeClass('locked');
-                    // $('#masterclass').removeClass('locked');
-                    // $('#resources').addClass('locked');
-
-                    $('body').removeClass('trial-period');
+                if ($.inArray("778", umList) > -1) {
+                    unlockVam();
                 }
-                if ($.inArray('775', umList) > -1) {
-                    console.log('Digital Marketing');
-                    $('#digitalmarketing').removeClass('locked');
+                if ($.inArray("777", umList) > -1) {
+                    unlockVam();
                 }
-                if ($.inArray('214', umList) > -1 ||
-                    $.inArray('278', umList) > -1) {
-                    console.log('Full Access');
-                    $('body').removeClass('locked');
-                    $('#modules').removeClass('locked');
-                    $('#masterclass').removeClass('locked');
-                    $('#facebookgroup').removeClass('locked');
-                    $('#resources').removeClass('locked');
+                if ($.inArray("945", umList) > -1) {
+                    unlockVam();
+                }
+                if ($.inArray("775", umList) > -1) {
+                    unlockDm();
+                }
+                if ($.inArray("214", umList) > -1) {
+                    unlockCourses();
+                }
+                if ($.inArray("278", umList) > -1) {
+                    unlockCourses();
                 }
             }
 
-            if (localStorage.id) {
+            if (typeof(localStorage.id) != "undefined") {
                 checkTrial(localStorage.id);
-                if (os == "ios") {
-                    restoreInAppPurchase(localStorage.id);
-                } else {
-                    checkSubscription(localStorage.id);
-                }
             }
 
             if ($('body').hasClass('trial-period')) {
-                $('#facebookgroup').removeClass('locked');
-                $('#memberscalendar').removeClass('locked');
-                $('#membersdiscount').removeClass('locked');
+                unlockTrialPeriod();
+            }
+
+            if (os == "ios" && testMode != true) {
+                restoreInAppPurchase(localStorage.id);
+            } else {
+                checkSubscription(localStorage.id);
+            }
+
+            if (testMode == true) {
+                unlockVam();
+                unlockDm();
+                unlockCourses();
             }
         } else {
             $('.loader').fadeOut(200);
             setTimeout(function() {
                 $('.sect').slideToggle(200);
-            }, 300)
-        }
-    }
-
-    function getMobileOperatingSystem() {
-        var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        if (/windows phone/i.test(userAgent)) {
-            return "windowsphone";
-        }
-        if (/android/i.test(userAgent)) {
-            return "android";
-        }
-        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-            return "ios";
+            }, 300);
         }
     }
 
@@ -395,15 +853,15 @@ function initApp() {
             $('.error').removeClass('active');
             setTimeout(function() {
                 $('.error').hide();
-            }, 500)
-        }, 5000)
+            }, 500);
+        }, 5000);
 
         $('.error > button').click(function() {
             $('.error').removeClass('active');
             setTimeout(function() {
                 $('.error').hide();
-            }, 500)
-        })
+            }, 500);
+        });
     }
 
     function login(user, pass) {
@@ -414,8 +872,7 @@ function initApp() {
         var html = "";
 
         $('.login-form p.error').stop().slideUp();
-        $('.loader-message').text('Logging in..');
-        $('.loader').fadeIn(200);
+        showLoader("Logging in..");
 
         var url = "https://growmymusic.com/api/user/generate_auth_cookie/?";
         var httpData = {
@@ -424,6 +881,8 @@ function initApp() {
             "insecure": "cool"
         };
 
+
+        showLoader("Logging in..");
         performHttp(url, "get", httpData, function(response) {
             console.log('server connected');
             console.log(response);
@@ -438,16 +897,16 @@ function initApp() {
                 localStorage.setItem("user", user);
                 localStorage.setItem("pass", pass);
 
-                if ( typeof(data.user.firstname) != "undefined") {
+                if (typeof(data.user.firstname) != "undefined") {
                     localStorage.setItem("firstname", data.user.firstname);
                 }
-                if ( typeof(data.user.lastname) != "undefined") {
+                if (typeof(data.user.lastname) != "undefined") {
                     localStorage.setItem("lastname", data.user.lastname);
                 }
-                if ( typeof(data.user.registered) != "undefined") {
+                if (typeof(data.user.registered) != "undefined") {
                     localStorage.setItem("registered", data.user.registered);
                 }
-                if ( typeof(data.user.id) != "undefined") {
+                if (typeof(data.user.id) != "undefined") {
                     localStorage.setItem("id", data.user.id);
                 }
 
@@ -456,39 +915,45 @@ function initApp() {
                     $('.loader').fadeOut(200);
                     $('.first-page').remove();
                     $('.login-page').remove();
-                }, 1000)
+                }, 1000);
 
                 backButtons();
-                checkTrial(localStorage.id);
-
                 restoreInAppPurchase(localStorage.id);
-
                 partnersList();
+                var resString = JSON.stringify(data);
+                logErrors(user, "Log in successful! email:" + localStorage.user + " id:" + localStorage.id + "___data:" + resString);
+                
+                checkTrial(localStorage.id);
+                getProfile();
+
+                if (typeof(localStorage.slide) == "undefined"){
+                    showSlider();
+                }
+                
             } else {
-                $('.loader-message').text('');
                 $('.loader').fadeOut(200);
-                errorHandler("An error has occured while trying to log in, please check your details and try again. ( "+ responseData.error + " )" );
+                errorHandler("An error has occured while trying to log in, please check your details and try again. ( " + responseData.error + " )");
+                var errorString = JSON.stringify(response);
+                logErrors(user, errorString);
             }
-            
         }, function(response) {
-            $('.loader-message').text('');
+            var responseData = JSON.parse(response.data);
             $('.loader').fadeOut(200);
-            errorHandler("An error has occured while trying to log in, please check your details and try again.");
-        })
+            errorHandler("An error has occured while trying to log in, please check your details and try again.( " + responseData.error + " )");
+
+            var errorString = JSON.stringify(response);
+            logErrors(user, errorString);
+        });
     }
 
-    function checkSubscription(id, mode) {
-
-        if (mode == "first") {
-            $('.loader').fadeIn(200);
-        } else {
-            $('.loader').fadeIn(200);
-            $('.loader-message').text('')
-        }
-
-        var url = "https://growmymusic.com/wp-json/mp/v1/members/" + id;
+    function getSubscriptions(id, mode) {
+        var url = "https://growmymusic.com/wp-api/mp/v1/members/" + id;
         var httpData = {};
-        var setMode = mode;
+        var setMode = mode == "" ? "" : typeof(mode) == "undefined" ? "" : mode;
+
+        showLoader("syncing data : subscriptions");
+        var memberships = [];
+        var membershipIds = [];
 
         performHttp(url, "get", httpData, function(response) {
             console.log("cordovahttp subscription : " + response);
@@ -499,104 +964,58 @@ function initApp() {
             localStorage.setItem('activeMemberships', JSON.stringify(membership));
 
             if (membership.length > 0) {
-                localStorage.setItem('membership', membership[0].title);
-                localStorage.setItem("isMember", "true");
-                localStorage.setItem("membershipid", membership[0].id);
-                var memberships = [];
-                var membershipIds = [];
 
-                /*  memberships
-                    214 - 4 times payment
-                    278 - one time membership
-                    775 - digital marketing
-                    777 - VAM weekly
-                    778 - VAM Monthly
-                    945 - VAM Yearly
-                */
+                showLoader("syncing data : subscriptions pulled");
 
                 for (a = 0; a < membership.length; a++) {
                     var $this = membership[a];
+                    var membershipId = $this.id;
                     memberships.push($this);
-                    membershipIds.push($this.id);
+                    membershipIds.push(membershipId.toString());
                 }
 
                 localStorage.setItem("usermemberships", memberships);
                 localStorage.setItem("usermembershipids", membershipIds);
 
+                localStorage.setItem('membership', membership[0].title);
+                localStorage.setItem("isMember", "true");
+                localStorage.setItem("membershipid", membership[0].id);
+                localStorage.setItem("activeMembershipIds", membershipIds.join(","));
+
                 console.log('memberships:');
                 console.log(memberships);
                 console.log(membershipIds);
 
-                /*
-                * MAKE SURE THAT ACCESS ARE BASED ON MEMBERSHIP
-                * VAM - ONLY GIVES THE DC COUPONS
-                * DM - ONLY DM
-                * OTHERS HAVE FULL ACCESS DEPENDING ON THE DURATION OF THEIR SUBSC.
-                */
-
-                if ($.inArray(778, membershipIds) > -1 ||
-                    $.inArray(777, membershipIds) > -1 ||
-                    $.inArray(945, membershipIds) > -1) {
-                    console.log('Virtual Artist Manager');
-                    $('#facebookgroup').removeClass('locked');
-                    $('#memberscalendar').removeClass('locked');
-                    $('#membersdiscount').removeClass('locked');
-
-                    // $('#digitalmarketing').removeClass('locked');
-                    // $('body').removeClass('locked');
-                    // $('#modules').removeClass('locked');
-                    // $('#masterclass').removeClass('locked');
-                    // $('#resources').addClass('locked');
-
-                    $('body').addClass('vam');
-                    $('body').removeClass('trial-period');
+                if ($.inArray("778", membershipIds) > -1) {
+                    unlockVam();
                 }
-                if ($.inArray(775, membershipIds) > -1) {
-                    console.log('Digital Marketing');
-                    $('#digitalmarketing').removeClass('locked');
-                    $('#vam-tile-main').hide();
-                    $('body').addClass('dm');
+                if ($.inArray("777", membershipIds) > -1) {
+                    unlockVam();
                 }
-                if ($.inArray(214, membershipIds) > -1 ||
-                    $.inArray(278, membershipIds) > -1) {
-                    console.log('Full Access');
-                    $('#vam-tile-main').hide();
-                    $('body').removeClass('locked');
-                    $('#modules').removeClass('locked');
-                    $('#masterclass').removeClass('locked');
-                    $('#facebookgroup').removeClass('locked');
-                    $('#resources').removeClass('locked');
-                    $('body').addClass('fa');
+                if ($.inArray("945", membershipIds) > -1) {
+                    unlockVam();
+                }
+                if ($.inArray("775", membershipIds) > -1) {
+                    unlockDm();
+                }
+                if ($.inArray("214", membershipIds) > -1) {
+                    unlockCourses();
+                }
+                if ($.inArray("278", membershipIds) > -1) {
+                    unlockCourses();
                 }
 
                 $('.loader').fadeOut(200);
                 $('.loader-message').text('');
             } else {
                 localStorage.setItem("isMember", "false");
-
-                $('#vam-tile-main').hide();
-                $('body').addClass('locked');
-                $('#modules').addClass('locked');
-                $('#masterclass').addClass('locked');
-                $('#facebookgroup').addClass('locked');
-                $('#resources').addClass('locked');
-                $('#memberscalendar').addClass('locked');
-                $('#membersdiscount').addClass('locked');
-
-                $('.loader').fadeOut(200);
-                $('.loader-message').text('');
+                lockAllTiles();
 
                 if ($('body').hasClass('trial-period')) {
-                    $('#facebookgroup').removeClass('locked');
-                    $('#memberscalendar').removeClass('locked');
-                    $('#membersdiscount').removeClass('locked');
-
-                    $('#digitalmarketing').removeClass('locked');
-                    $('body').removeClass('locked');
-                    $('#modules').removeClass('locked');
-                    $('#masterclass').removeClass('locked');
-                    $('#resources').addClass('locked');
+                    unlockTrialPeriod();
                 }
+
+                $('.loader').fadeOut(200);
             }
 
             if (setMode == "iosrestore") {
@@ -606,51 +1025,87 @@ function initApp() {
                     switch (iapPurchased[a]) {
                         case "com.growmymusic.vammonthly":
                             console.log('Virtual Artist Manager');
-                            $('#facebookgroup').removeClass('locked');
-                            $('#memberscalendar').removeClass('locked');
-                            $('#membersdiscount').removeClass('locked');
-
-                            $('#digitalmarketing').removeClass('locked');
-                            $('body').removeClass('locked');
-                            $('#modules').removeClass('locked');
-                            $('#masterclass').removeClass('locked');
-                            $('#resources').addClass('locked');
-
-
-                            $('body').addClass('vam');
-                            $('body').removeClass('trial-period');
+                            unlockVam();
                             break;
-
                         case "com.growmymusic.digitalmarketing":
-                            console.log('Digital Marketing');
-                            $('#digitalmarketing').removeClass('locked');
-                            $('#vam-tile-main').hide();
-                            $('body').addClass('dm');
+                            unlockDm();
                             break;
-
                         case "com.growmymusic.onlinecourse2dayseminar":
-                            console.log('Full Access');
-                            $('#vam-tile-main').hide();
-                            $('body').removeClass('locked');
-                            $('#modules').removeClass('locked');
-                            $('#masterclass').removeClass('locked');
-                            $('#facebookgroup').removeClass('locked');
-                            $('#resources').removeClass('locked');
-                            $('body').addClass('fa');
+                            unlockCourses();
                             break;
-
                     }
                 }
             }
+
+            checkFirstUse();
+            logErrors(localStorage.user, "subscriptions successfully pulled");
         }, function(response) {
-            console.log(response.status);
-            console.log(response.error);
-            errorHandler("An error has occured while trying to get your subscription information, please try again later");
-        })
+            $('.loader').fadeOut();
+            errorHandler("An error has occured while trying to get your subscription information, please try again later.");
+
+            var errorString = JSON.stringify(response);
+            logErrors(localStorage.user, url + " : " + errorString);
+        });
+    }
+
+    function checkSubscription(id, mode) {
+        if (typeof(localStorage.activeMemberships) == "undefined") {
+            getSubscriptions(id, mode);
+        } else {
+
+            showLoader("syncing saved subscriptions");
+            var memberships = localStorage.activeMemberships.split(",");
+            console.log(memberships);
+
+            if ($.inArray("778", memberships) > -1) {
+                unlockVam();
+            }
+            if ($.inArray("777", memberships) > -1) {
+                unlockVam();
+            }
+            if ($.inArray("945", memberships) > -1) {
+                unlockVam();
+            }
+            if ($.inArray("775", memberships) > -1) {
+                unlockDm();
+            }
+            if ($.inArray("214", memberships) > -1) {
+                unlockCourses();
+            }
+            if ($.inArray("278", memberships) > -1) {
+                unlockCourses();
+            }
+
+
+            if (mode == "iosrestore") {
+                console.log("restoring ios in app purchase");
+                console.log(iapPurchased);
+                for (a = 0; a < iapPurchased.length; a++) {
+                    switch (iapPurchased[a]) {
+                        case "com.growmymusic.vammonthly":
+                            console.log('Virtual Artist Manager');
+                            unlockVam();
+                            break;
+                        case "com.growmymusic.digitalmarketing":
+                            unlockDm();
+                            break;
+                        case "com.growmymusic.onlinecourse2dayseminar":
+                            unlockCourses();
+                            break;
+                    }
+                }
+            }
+
+            checkFirstUse();
+            $('.loader').fadeOut(200);
+            $('.loader-message').text('');
+            logErrors(localStorage.user, "loaded saved subscriptions");
+        }
     }
 
     function getBeatStars() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/2/public/values?alt=json', function(data, xhr) {
+            console.log("beatstars list");
             console.log('gdoc : ' + xhr);
             console.log(data);
             if (xhr == 200 || xhr == "success") {
@@ -660,14 +1115,15 @@ function initApp() {
                 var html = '';
                 var parse = {};
 
-                if (context == undefined) {
-                    $('#beatstars-items').text('There are no producer catalogs at the moment. Please check back later.')
+                if (context === undefined || typeof(context) === "undefined") {
+                    $('#beatstars-items').text('There are no producer catalogs at the moment. Please check back later.');
                 } else {
                     for (var i = 0; i < context.length; i++) {
                         html = html.concat(template(context[i]));
                     }
                 }
 
+                $('#beatstars-items').html('');
                 $('#beatstars-items').append(html);
                 $('#beatstars-items').show();
 
@@ -675,8 +1131,8 @@ function initApp() {
                     $(this).click(function(e) {
                         var url = $(this).attr('data-url');
                         browser(url);
-                    })
-                })
+                    });
+                });
 
             } else {
                 errorHandler("An error has occured while trying to access the hit producer catalog database, please try again.");
@@ -686,6 +1142,7 @@ function initApp() {
 
     function getSeminarSchedule() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/1/public/values?alt=json', function(data, xhr) {
+            console.log("seminar schedules");
             console.log('gdoc : ' + xhr);
             console.log(data);
             if (xhr == 200 || xhr == "success") {
@@ -695,12 +1152,14 @@ function initApp() {
                 var html = '';
                 var parse = {};
 
-                if (context == undefined) {
-                    $('#seminar-schedule').text("Our seminars occur annually towards the end of the year. Express your interest to make sure you don't miss out.")
+                if (context === undefined || typeof(context) === "undefined") {
+                    $('#seminar-schedule').text("Our seminars occur once annually towards the end of the year. Express your interest to make sure you don't miss out. Seminars are free for Virtual Artist Manager subscribers and $1497 for everyone else.");
+                    $('.members-calendar-tiles[data-type="2day-seminar"] .tile-wrap').removeClass('active');
                 } else {
                     for (var i = 0; i < context.length; i++) {
                         html = html.concat(template(context[i]));
                     }
+                    $('.members-calendar-tiles[data-type="2day-seminar"] .tile-wrap').addClass('active');
                 }
 
                 $('#seminar-schedule').append(html);
@@ -712,16 +1171,44 @@ function initApp() {
         });
     }
 
+    function setRegisteredUser(email){
+        var url = "https://script.google.com/macros/s/AKfycbzbotp9MT49gl1UuEYt9UnN0jFZmXOOOmKF2j83MYlOk7xYtxmw/exec";
+        var jqxhr = $.ajax({
+            url: url+"?Email="+email,
+            method: "GET",
+            dataType: "json",
+        }).success(function(result) {
+            $('.loader').hide();
+        });
+    }
+
+    function sendRegisterEmail(email, fullname){
+
+        var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
+        var action = "registerviaapp";
+        var httpData = {
+            "action": action,
+            "RVAName": fullname,
+            "RVAEmail": email
+        };
+            performHttp(url, "post", httpData, function(response) {
+                console.log(response);
+            }, function(response) {
+                console.log(response.status);
+                console.log(response.error);
+            });
+    }
+
     function register(user, email, pass, fname, lname, phone) {
         var fullname = fname + " " + lname;
         var displayname;
         var nonce;
         var phone;
-        if (user != '' && email != '' && pass != '' && fname != '' && lname != '' && phone != '') {
+        if (user !== '' && email !== '' && pass !== '' && fname !== '' && lname !== '' && phone !== '') {
             displayname = user;
             phone = phone;
 
-            $('.loader').fadeIn(200);
+            showLoader("Registering account..");
             var url = "https://growmymusic.com/api/get_nonce/?controller=user&method=register";
 
             cordovaHTTP.post(url, {}, {
@@ -762,13 +1249,14 @@ function initApp() {
                         }, function(response) {
                             var data = JSON.parse(response.data);
                             if (data.status == 'ok') {
+                                setRegisteredUser(email);
+                                sendRegisterEmail(email,fullname)
                                 setTimeout(function() {
                                     login(email, pass);
-                                }, 1000)
+                                }, 1000);
                             } else {
                                 $('#reg-form p.error').text(data.error).slideDown();
                                 $('.loader').fadeOut(200);
-                                $('.loader-message').text('');
                             }
                         }, function(response) {
                             console.log(response.status);
@@ -777,13 +1265,17 @@ function initApp() {
                     } else {
                         $('#reg-form p.error').text(data.error).slideDown();
                         $('.loader').fadeOut(200);
-                        $('.loader-message').text('');
+                        errorHandler("An error has occured while trying to register an account, please check your details and try again.");
                     }
                 }, function(response) {
+                    $('.loader').fadeOut(200);
+                    var redata = JSON.parse(response.error);
                     console.log(response.status);
                     console.log(response.error);
+                    errorHandler("An error has occured while trying to register an account, please check your details and try again. ( " + redata.error + " )");
                 });
             }, function(response) {
+                $('.loader').fadeOut(200);
                 console.log(response.status);
                 console.log(response.error);
                 $('.loader').fadeOut(200);
@@ -798,26 +1290,27 @@ function initApp() {
 
     function logOut() {
         localStorage.clear();
-        $('.loader').fadeIn(200);
-        $('.loader-message').text('Logging out..')
+        showLoader("Logging out..");
 
         setTimeout(function() {
-            window.location = "./index.html";
-        }, 1000)
+            window.location.reload(true);
+        }, 1000);
     }
 
     function myAccount() {
-        var accountSource = $("#account-template").html();
+
+        var accountSource = $("#account-template-2").html();
         var accountTemplate = Handlebars.compile(accountSource);
 
-        var fn = localStorage.firstname;
-        var ln = localStorage.lastname;
-        var reg = localStorage.registered;
-        var email = localStorage.user;
-        var mem = localStorage.membership;
+        var fn = typeof(localStorage.firstname) == "undefined" ? "" : localStorage.firstname;
+        var ln = typeof(localStorage.lastname) == "undefined" ? "" : localStorage.lastname;
+        var reg = typeof(localStorage.registered) == "undefined" ? "" : localStorage.registered;
+        var email = typeof(localStorage.user) == "undefined" ? "" : localStorage.user;
+        var mem = typeof(localStorage.membership) == "undefined" ? "" : localStorage.membership;
         var fnp = fn.charAt(0);
         var lnp = ln.charAt(0);
         var html = '';
+
 
         var context = {
             'firstname': fn,
@@ -828,33 +1321,41 @@ function initApp() {
             'membership': mem
         };
 
-
-        var unparsedDate = Date.parse(context.registered);
-        var t = context.registered.split(/[- :]/);
-        var d = new Date(t[0], t[1] - 1, t[2], t[3], t[4], t[5]);
-        var actiondate = new Date(d);
-        var parsedDate = (actiondate.getMonth() + 1) + '/' + actiondate.getDate() + '/' + actiondate.getFullYear();
-
-        context.registered = parsedDate;
+        console.log("my account context data");
+        console.log(context);
 
         html = html.concat(accountTemplate(context));
-        $('#my-account-page').html('');
-        $('#my-account-page').append(html);
+        $('#my-account-page > div').html('');
+        $('#my-account-page > div').append(html);
 
-        if (localStorage.membership == 'undefined' || localStorage.membership == undefined) {
+        if (typeof(localStorage.membership) === 'undefined' || localStorage.membership === 'undefined' || localStorage.membership === undefined) {
             $('#my-account-page').addClass('unregistered');
             $('#my-account-page .epage').each(function() {
                 $(this).click(function(e) {
                     var url = $(this).attr('data-url');
                     var id = $(this).attr('id');
                     browser(url);
-                })
-            })
+                });
+            });
         } else {
             $('#my-account-page').removeClass('unregistered');
         }
 
         initLogout();
+        
+        if (typeof(localStorage.profile) != "undefined") {
+            console.log('profile in local');
+            setProfile();
+            initProfileBtns();
+        } else {
+            console.log('pulling profile from db');
+            getProfile();
+            initProfileBtns();
+        }
+
+        $('#artist-profile-btn').click(function() {
+            $('#profile-builder').fadeIn();
+        });
     }
 
     function formatDate(date) {
@@ -879,7 +1380,7 @@ function initApp() {
         vid.load();
         $('video#locked-video').click(function() {
             playPauseLocked();
-        })
+        });
     }
 
     function playPauseLocked() {
@@ -892,11 +1393,11 @@ function initApp() {
 
     function locked(content, message) {
         removeAllVideos();
-
+        var vurl = "";
         switch (content) {
             case 'masterclass':
                 $('#locked-wrap .locked-info').hide();
-                var vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/oldmangmmadd.mp4"
+                vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/oldmangmmadd.mp4";
                 setLockedVideo(vurl);
 
                 $('#locked-wrap .locked-html .locked-title').text('Gain access to Grow My Music Online Course');
@@ -911,7 +1412,7 @@ function initApp() {
                 break;
             case 'modules':
                 $('#locked-wrap .locked-info').hide();
-                var vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/oldmangmmadd.mp4"
+                vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/oldmangmmadd.mp4";
                 setLockedVideo(vurl);
 
                 $('#locked-wrap .locked-html .locked-title').text('Gain access to Grow My Music Online Course');
@@ -924,9 +1425,8 @@ function initApp() {
                     scrollTop: (0)
                 }, 100);
                 break;
-                break;
             case 'facebookgroup':
-                var vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/oldmangmmadd.mp4"
+                vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/oldmangmmadd.mp4";
                 setLockedVideo(vurl);
 
                 $('#locked-wrap .locked-html .locked-title').text('Gain access to Grow My Music Private Facebook Group');
@@ -952,7 +1452,7 @@ function initApp() {
                 break;
             case 'resources':
                 $('#locked-wrap .locked-info').hide();
-                var vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/oldmangmmadd.mp4"
+                vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/oldmangmmadd.mp4";
                 setLockedVideo(vurl);
 
                 $('#locked-wrap .locked-html .locked-title').text('Gain access to Grow My Music Online Course');
@@ -967,7 +1467,7 @@ function initApp() {
                 break;
             case 'digitalmarketing':
                 $('#locked-wrap .locked-info').hide();
-                var vurl = "https://s3-ap-southeast-2.amazonaws.com/digitalmarketingcourse2017/ads/digitalmarketingcartoonadfinalcompressed.mp4"
+                vurl = "https://s3-ap-southeast-2.amazonaws.com/digitalmarketingcourse2017/ads/digitalmarketingcartoonadfinalcompressed.mp4";
                 setLockedVideo(vurl);
 
                 $('#locked-wrap .locked-html .locked-title').text("Gain access to Grow My Music's Digital Marketing Course");
@@ -982,7 +1482,7 @@ function initApp() {
                 break;
             case 'membersdiscount':
                 $('#locked-wrap .locked-info').hide();
-                var vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/vampromolongupdated.mp4"
+                vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/vampromolongupdated.mp4";
                 setLockedVideo(vurl);
 
                 $('#locked-wrap .locked-html .locked-title').text('Subscribe to the Virtual Artist Manager App');
@@ -996,8 +1496,9 @@ function initApp() {
                 }, 100);
                 break;
             case 'memberscalendar':
+
                 $('#locked-wrap .locked-info').hide();
-                var vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/vampromolongupdated.mp4"
+                vurl = "https://s3.amazonaws.com/gmmonlinecourse2017/ads/vampromolongupdated.mp4";
                 setLockedVideo(vurl);
 
                 $('#locked-wrap .locked-html .locked-title').text('Subscribe to the Virtual Artist Manager App');
@@ -1055,32 +1556,34 @@ function initApp() {
                 $('#locked-mp4').attr('src', '');
                 $('#locked-wrap').fadeOut(200);
             }
-        })
+        });
     }
 
     function backButtons() {
         $('#back').click(function() {
             $('.navigation').removeClass('content').addClass('home');
             $('#inner-content').removeClass('content');
+            $('#bottom-nav').removeClass('content');
+
             $(window).scrollTop(0);
             setTimeout(function() {
                 $('.content-wrap').fadeIn(200);
-            }, 300)
+            }, 300);
 
 
             setTimeout(function() {
                 $('.content-body').each(function() {
                     $(this).hide();
-                })
+                });
                 $('#inner-content').hide();
-            }, 300)
+            }, 300);
 
             if (cordova) {
                 screen.orientation.lock('portrait');
             }
 
             destroyBannerAds();
-        })
+        });
 
         $('#log-back').click(function() {
             $('.first-page').show();
@@ -1088,9 +1591,9 @@ function initApp() {
             setTimeout(function() {
                 $('#log-in-form').hide();
                 $('#reg-form').hide();
-            }, 300)
+            }, 300);
 
-        })
+        });
     }
 
     function onBackKeyDown() {
@@ -1099,13 +1602,14 @@ function initApp() {
         if (!$('#my-account-page').hasClass('ma-active') && $('#inner-content').hasClass('content') && !$('.video').is(':visible')) {
             $('.navigation').removeClass('content').addClass('home');
             $('#inner-content').toggleClass('content');
+            $('#bottom-nav').removeClass('content');
             $('.content-wrap').fadeIn(200);
             setTimeout(function() {
                 $('.content-body').each(function() {
                     $(this).hide();
-                })
+                });
                 $('#inner-content').hide();
-            }, 300)
+            }, 300);
         } else if (!$('#my-account-page').hasClass('ma-active') && $('#inner-content').hasClass('content') && $('.video').is(':visible')) {
             var vid = $('#video')[0];
             vid.pause();
@@ -1136,7 +1640,7 @@ function initApp() {
             setTimeout(function() {
                 $('#log-in-form').hide();
                 $('#reg-form').hide();
-            }, 300)
+            }, 300);
         } else {
             navigator.app.exitApp();
         }
@@ -1145,29 +1649,28 @@ function initApp() {
     function navScroll() {
         $(window).scroll(function() {
             if ($(window).scrollTop() >= 105) {
-                $('.content-banner-text').addClass('fx')
+                $('.content-banner-text').addClass('fx');
             } else {
-                $('.content-banner-text').removeClass('fx')
+                $('.content-banner-text').removeClass('fx');
             }
 
             if ($(window).scrollTop() >= 180) {
-                $('.content-body').addClass('scrolled')
+                $('.content-body').addClass('scrolled');
             } else {
-                $('.content-body').removeClass('scrolled')
+                $('.content-body').removeClass('scrolled');
             }
-        })
+        });
     }
 
     function initLogout() {
         $('button#logout').click(function() {
-            console.log('log out')
+            console.log('log out');
             logOut();
-        })
+        });
     }
 
     function destroyBannerAds() {
-        if (window.plugins && window.plugins.AdMob) {
-        }
+        if (window.plugins && window.plugins.AdMob) {}
     }
 
     function androidFirstVid(url) {
@@ -1194,7 +1697,7 @@ function initApp() {
 
         $('video').click(function() {
             playPause();
-        })
+        });
     }
 
     function playPause() {
@@ -1216,8 +1719,8 @@ function initApp() {
                 var z = y.pop();
 
                 window.open(encodedurl, "_system", "location=no,enableViewportScale=yes");
-            })
-        })
+            });
+        });
     }
 
     function setTiles() {
@@ -1229,13 +1732,13 @@ function initApp() {
                 $('#vid-title').text(title);
                 $('.video').fadeIn(200);
 
-                setVideo(url)
+                setVideo(url);
 
                 if (cordova) {
                     screen.orientation.unlock();
                 }
-            })
-        })
+            });
+        });
 
         $('#close-vid').click(function() {
             var vid = $('#video')[0];
@@ -1247,11 +1750,12 @@ function initApp() {
             if (cordova) {
                 screen.orientation.lock('portrait');
             }
-        })
+        });
     }
 
     function partnersList() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1Wyl3s9AxuK0mKNrzCAg_8ERLbuq-oSmF8F6fpGqSlNc/1/public/values?alt=json', function(data, xhr) {
+            console.log("partners list");
             console.log('gdoc : ' + xhr);
             console.log(data);
             if (xhr == 200 || xhr == "success") {
@@ -1260,6 +1764,8 @@ function initApp() {
                 var context = data.feed.entry;
                 var html = '';
                 var parse = {};
+
+                $('#partners-items .list-con').empty();
 
                 for (var i = 0; i < context.length; i++) {
                     html = html.concat(template(context[i]));
@@ -1272,34 +1778,51 @@ function initApp() {
                     $('.content-container').animate({
                         'opacity': 1
                     }, 200);
-                }, 200)
+                }, 200);
 
                 $('.list-item').each(function() {
                     $(this).click(function() {
                         if ($('body').hasClass('locked')) {
                             locked('list');
                         }
-                    })
-                })
+                    });
+                });
 
                 $('.list-toggle').each(function() {
                     $(this).click(function() {
                         $(this).parent().find('.details').stop().slideToggle(200);
                         $(this).parent().toggleClass('opened');
                     });
-                })
+                });
 
                 $('.list-item p.phone a').each(function() {
-                    if ($(this).text() == "") {
+                    if ($(this).text() === "") {
                         $(this).parent().hide();
                     }
-                })
+                });
 
 
             } else {
                 errorHandler("An error has occured while trying to access the partners database, please try again.");
             }
         });
+    }
+
+    function openInnerPages() {
+        $('#inner-content').show();
+        $('.content-wrap').fadeOut(200);
+
+        setTimeout(function() {
+            $('html,body').scrollTop(0);
+        }, 250);
+
+        setTimeout(function() {
+            $('.navigation').removeClass('home').addClass('content');
+            $('#inner-content').addClass('content');
+            $('#bottom-nav').addClass('content');
+        }, 350);
+
+        backButtons();
     }
 
     function initClicks() {
@@ -1320,52 +1843,86 @@ function initApp() {
 
                     switch (content) {
                         case 'membersdiscount':
-                            $('#membersdiscount-con').show();
-                            navScroll();
+
+                            showLoader('');
+                            getCouponCategories();
+                            getMonthlyCoupons();
+
+                            getCoupons(function() {
+                                $('#membersdiscount-con').show();
+                                openInnerPages();
+                                navScroll();
+                                $('.loader').fadeOut();
+                            });
+
+                            console.log('coupons initialized');
+
+
                             break;
                         case 'memberscalendar':
-                            $('#memberscalendar-con').show();
-                            navScroll();
+                            showLoader('');
+                            membershipCalendarTiles(function() {
+                                $('#memberscalendar-con').show();
+                                openInnerPages();
+                                navScroll();
+                                $('.loader').fadeOut();
+                            });
+
                             break;
                         case 'workshop':
+                            openInnerPages();
                             $('#workshop-con').show();
                             navScroll();
                             break;
                         case 'modules':
+                            openInnerPages();
                             $('#modules-con').show();
                             navScroll();
                             break;
                         case 'digitalmarketing':
-                            $('#digitalmarketing-con').show();
+                            showLoader('');
+                            getDmResources(function() {
+                                openInnerPages();
+                                $('#digitalmarketing-con').show();
 
-                            $('#dm-resources .download-tiles').click(function() {
-                                var url = $(this).attr('data-url');
-                                var encodedurl = encodeURI(url);
-                                var item = $(this).attr('data-name');
-                                var type = $(this).attr('data-type');
-                                var y = url.split('/');
-                                var z = y.pop();
+                                $('#dm-resources .download-tiles').click(function() {
+                                    var url = $(this).attr('data-url');
+                                    var encodedurl = encodeURI(url);
+                                    var item = $(this).attr('data-name');
+                                    var type = $(this).attr('data-type');
+                                    var y = url.split('/');
+                                    var z = y.pop();
 
-                                window.open(encodedurl, "_system", "location=no,enableViewportScale=yes");
-                            })
-                            navScroll();
+                                    window.open(encodedurl, "_system", "location=no,enableViewportScale=yes");
+                                    $('.loader').fadeOut();
+                                });
+                                navScroll();
+                            });
+
                             break;
                         case 'masterclass':
+                            openInnerPages();
                             $('#masterclass-con').show();
                             navScroll();
                             break;
                         case 'contact':
+                            openInnerPages();
                             $('#contact-page').show();
                             navScroll();
                             break;
                         case 'resources':
-                            $('#resources-con').show();
-                            downloadTiles();
-                            navScroll();
+                            showLoader('');
+                            getResources(function() {
+                                downloadTiles();
+                                openInnerPages();
+                                $('#resources-con').show();
+                                navScroll();
+                                $('.loader').fadeOut();
+                            })
                             break;
                         case 'partnerslist':
                             partnersList();
-
+                            openInnerPages();
                             $('#partners-con').show();
 
                             $('#partners-category').change(function() {
@@ -1378,7 +1935,7 @@ function initApp() {
 
                                 $('html,body').animate({
                                     scrollTop: $('#navigation').outerHeight() + $('.slick-slider').outerHeight()
-                                }, 200)
+                                }, 200);
 
                                 $('.list-view').fadeOut(200);
                                 $('#partners-items .list-con').empty();
@@ -1387,8 +1944,8 @@ function initApp() {
                                 $('#partners-category').attr('disabled', true);
 
                                 $.getJSON('https://spreadsheets.google.com/feeds/list/1Wyl3s9AxuK0mKNrzCAg_8ERLbuq-oSmF8F6fpGqSlNc/' + dataPull + '/public/values?alt=json', function(data) {
-                                    console.log('gdoc')
-                                    console.log(data)
+                                    console.log('gdoc');
+                                    console.log(data);
 
                                     var source = $("#list-template").html();
                                     var template = Handlebars.compile(source);
@@ -1400,6 +1957,7 @@ function initApp() {
                                         html = html.concat(template(context[i]));
                                     }
 
+                                    $('#partners-items .list-con').empty();
                                     $('#partners-items .list-con').append(html);
                                     $('.list-view').fadeIn(200);
 
@@ -1407,7 +1965,7 @@ function initApp() {
                                         $('.content-container').animate({
                                             'opacity': 1
                                         }, 200);
-                                    }, 200)
+                                    }, 200);
 
                                     $('.list-item').each(function() {
                                         $(this).click(function() {
@@ -1417,14 +1975,14 @@ function initApp() {
                                                 $(this).find('.details').stop().slideToggle(200);
                                                 $(this).toggleClass('opened');
                                             }
-                                        })
-                                    })
+                                        });
+                                    });
 
                                     $('.list-item .inner-detail').each(function() {
-                                        if ($(this).text() == "") {
+                                        if ($(this).text() === "") {
                                             $(this).parent().hide();
                                         }
-                                    })
+                                    });
 
                                     $('.list-item .details-section .inner-detail').each(function() {
                                         $(this).click(function() {
@@ -1440,35 +1998,23 @@ function initApp() {
                                     $('#partners-items').html('<p style="text-align:center;padding:15px"><span class="fa fa-exclamation-triangle" style="display:block;margin-bottom:10px;"></span> An error has occured, please try again later</p>');
                                     $('#partners-items').removeClass('loading');
                                 });
-                            })
+                            });
 
                             navScroll();
                             break;
                     }
 
-                    $('#inner-content').show();
-                    $('.content-wrap').fadeOut(200);
 
-                    setTimeout(function() {
-                        $('html,body').scrollTop(0);
-                    }, 250)
-
-                    setTimeout(function() {
-                        $('.navigation').removeClass('home').addClass('content');
-                        $('#inner-content').addClass('content');
-                    }, 350)
-
-                    backButtons();
                 }
-            })
-        })
+            });
+        });
     }
 
     function initAd() {
         if (window.plugins && window.plugins.AdMob) {
             var ad_units = {
                 android: {
-                    banner: 'ca-app-pub-8521383528294320/2823155698', 
+                    banner: 'ca-app-pub-8521383528294320/2823155698',
                     interstitial: 'ca-app-pub-8521383528294320/1346422498'
                 },
                 ios: {
@@ -1482,14 +2028,13 @@ function initApp() {
                 publisherId: admobid.banner,
                 interstitialAdId: admobid.interstitial,
                 adSize: window.plugins.AdMob.AD_SIZE.SMART_BANNER,
-                bannerAtTop: false, 
+                bannerAtTop: false,
                 overlap: true,
-                offsetTopBar: false, 
-                isTesting: false, 
-                autoShow: true 
+                offsetTopBar: false,
+                isTesting: false,
+                autoShow: true
             });
-        } else {
-        }
+        } else {}
     }
 
     function registerAdEvents() {
@@ -1508,7 +2053,7 @@ function initApp() {
     }
 
     function adClosed() {
-        $('body').removeClass('ad')
+        $('body').removeClass('ad');
     }
 
     function browser(url) {
@@ -1524,18 +2069,18 @@ function initApp() {
 
     function loadExit() {
         if (!$('.login-page').is(':visible')) {
-            checkSubscription(localStorage.id)
+            checkSubscription(localStorage.id);
         } else {
             $('.loader').fadeOut(200);
         }
     }
 
     function loadStartCallBack() {
-        $('.loader').fadeIn(200);
+        showLoader("syncing data");
     }
 
     function loadStopCallBack() {
-        $('.loader').fadeOut(200);
+        showLoader("syncing data");
     }
 
     function unlock() {
@@ -1709,7 +2254,10 @@ function initApp() {
     }
 
     function inAppPurchases(productArray) {
-        inAppPurchase.getProducts(productArray).then(function(products) {
+        if (testMode == true){
+
+        } else {
+            inAppPurchase.getProducts(productArray).then(function(products) {
             console.log(products);
 
             $('body').addClass('has-iap');
@@ -1787,7 +2335,7 @@ function initApp() {
                         }, {
                             benefit: "Lifetime access",
                         }];
-                        item.title = 'Full Online Course Access'
+                        item.title = 'Full Online Course Access';
                         break;
 
                     case "com.growmymusic.vammonthly":
@@ -1802,7 +2350,7 @@ function initApp() {
                         }, {
                             benefit: "Monthly subscription.",
                         }];
-                        item.title = 'Virtual Artist Manager'
+                        item.title = 'Virtual Artist Manager';
                         break;
 
                     case "com.growmymusic.vamweekly":
@@ -1820,7 +2368,7 @@ function initApp() {
                         }, {
                             benefit: "1 year subscription.",
                         }];
-                        item.title = 'Virtual Artist Manager'
+                        item.title = 'Virtual Artist Manager';
                         break;
 
                     case "com.growmymusic.digitalmarketingyearly":
@@ -1832,7 +2380,7 @@ function initApp() {
                         }, {
                             benefit: "One",
                         }];
-                        item.title = 'Digital Marketing Course'
+                        item.title = 'Digital Marketing Course';
                         break;
                 }
 
@@ -1842,44 +2390,51 @@ function initApp() {
 
             $('#purchase-items').html("");
             $('#purchase-items').append(renderedHtml);
+
+            if (os === 'ios') {
+                $('#purchase-items a.plan[data-productid="com.growmymusic.vammonthly"]').prependTo($('#purchase-items'));
+            }
+
             iapClick();
 
         }).catch(function(err) {
             console.log(err);
             errorHandler("An error has occured while trying to get In App Purchases, please try again later.");
         });
+        }
+        
     }
 
     function iapClick() {
         $('a.plan').each(function() {
             var $this = $(this);
-            if (os == 'ios') {
+            if (os === 'ios') {
                 $this.click(function() {
                     var id = $this.attr('data-productid');
                     var meprprodid = $this.attr('data-meprid');
                     var productname = $this.attr('data-productname');
                     var type = $this.attr('data-type');
-                    if (type == "subscription") {
+                    if (type === "subscription") {
                         subscribeInAppPurchase(id, meprprodid, productname);
                     } else {
                         buyInAppPurchase(id, meprprodid, productname);
                     }
-                })
+                });
             } else {
                 $this.click(function() {
                     var url = $this.attr('data-url');
                     browser(url);
-                })
+                });
             }
-        })
+        });
     }
 
     function meprCreateTransaction(id, meprprodid) {
-        var credentials = btoa('bunnyfishcreatives@gmail.com:bunnyhito621');
+        var credentials = btoa('bunnyfishcreatives@gmail.com:phk2D9nvc6fBkYDYa8R1LpKi');
         var settings = {
             "async": true,
             "crossDomain": true,
-            "url": "https://growmymusic.com/wp-json/mp/v1/transactions",
+            "url": "https://growmymusic.com/wp-api/mp/v1/transactions",
             "method": "POST",
             "type": "json",
             beforeSend: function(xhr) {
@@ -1891,7 +2446,7 @@ function initApp() {
                 gateway: "manual",
                 status: "complete"
             }
-        }
+        };
 
         $.ajax(settings).done(function(response) {
             console.log(response);
@@ -1909,12 +2464,12 @@ function initApp() {
         };
 
         performHttp(url, "post", httpData, function(response) {
-            console.log("cordovahttp subscription : " + response);
+            console.log("in app purchase email confirmation to admin : " + response);
             console.log(response);
         }, function(response) {
             console.log(response.status);
             console.log(response.error);
-        })
+        });
     }
 
     function buyInAppPurchase(id, meprprodid, productname) {
@@ -1963,10 +2518,11 @@ function initApp() {
 
     function restoreInAppPurchase(id) {
 
-        $('.loader-message').text('');
-        $('.loader').fadeIn(200);
+        showLoader("syncing data");
 
-        if ($('body').hasClass('ios')) {
+        console.log('checking in app purchases');
+        var sys = getMobileOperatingSystem();
+        if (sys == "ios") {
             inAppPurchase.restorePurchases().then(function(data) {
                     console.log('restored iap');
                     console.log(data);
@@ -1977,6 +2533,9 @@ function initApp() {
                         var pass = localStorage.pass;
                         var id = localStorage.id;
 
+                        var iapLog = JSON.stringify(data);
+                        logErrors(localStorage.user, data);
+
                         for (var x = 0; x < data.length; x++) {
                             var product = data[x];
                             if (product.state != 1 || product.state != 2) {
@@ -1985,15 +2544,24 @@ function initApp() {
                             }
                         }
 
-                        checkSubscription(id, "iosrestore");
+                        checkSubscription(localStorage.id);
+                        var errorlog = JSON.stringify(data);
+                        logErrors(localStorage.user, "successfully pulled " + data.length + " in app purchase from itunes__" + errorlog);
+
+                    } else {
+                        checkSubscription(localStorage.id);
+                        var errorlog = JSON.stringify(data);
+                        logErrors(localStorage.user, "successfully pulled " + data.length + " in app purchase from itunes__" + errorlog);
                     }
 
                 })
                 .catch(function(err) {
                     console.log(err);
                     $('.loader').fadeOut(200);
+                    var errorlog = JSON.stringify(err);
+                    logErrors(localStorage.user, "failed to get in app purchases from itunes" + errorlog);
                     //errorHandler("An error has occured while trying to restore In App Purchases, please try again later.");
-                    checkSubscription(id);
+                    checkSubscription(localStorage.id);
                 });
         } else {
             $('.loader').fadeOut(200);
@@ -2001,6 +2569,7 @@ function initApp() {
             var pass = localStorage.pass;
             var id = localStorage.id;
             checkSubscription(id);
+            logErrors(localStorage.user, "checking subscriptions for android device via api");
         }
     }
 
@@ -2017,7 +2586,7 @@ function initApp() {
 
         var emailAddress = "";
 
-        if (testMode == true) {
+        if (testMode === true) {
             emailAddress = 'rafaellorenzodeleon@gmail.com';
         } else {
             emailAddress = type + '@growmymusic.com';
@@ -2040,7 +2609,7 @@ function initApp() {
         var arr = [];
 
         while (arr.length < length) {
-            var randomnumber = Math.ceil(Math.random() * range)
+            var randomnumber = Math.ceil(Math.random() * range);
             arr[arr.length] = randomnumber;
         }
         var join = arr.join('');
@@ -2048,12 +2617,13 @@ function initApp() {
         return (dnum + join);
     }
 
-    function getCoupons() {
+    function getCoupons(callback) {
         var coupons = [];
         var id = localStorage.id;
         var availedCoupons = [];
 
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/3/public/values?alt=json', function(data, xhr) {
+            console.log("coupons");
             console.log('gdoc : ' + xhr);
             console.log(data);
 
@@ -2071,22 +2641,24 @@ function initApp() {
                 } else {
                     for (var i = 0; i < context.length; i++) {
                         coupons.push(context[i].gsx$name.$t);
-                        if (context[i].gsx$image.$t == "") {
+                        if (context[i].gsx$image.$t === "") {
                             context[i].gsx$image.$t = "img/coupon placeholders/voucher-1.jpg";
                         }
                         html = html.concat(template(context[i]));
                     }
-                    console.log(coupons)
+                    console.log(coupons);
                 }
-
+                $('#sd-items').html('');
                 $('#sd-items').append(html);
                 $('.loader').fadeOut(200);
 
                 redeemCouponItem();
                 checkRedeemed(localStorage.id);
+
+                callback();
             } else {
                 $('.loader').fadeOut(200);
-                errorHandler("An error has occured while trying to access the hit producer catalog database, please try again.");
+                errorHandler("An error has occured while trying to access the coupons database, please try again.");
             }
         });
     }
@@ -2097,6 +2669,7 @@ function initApp() {
         var mdavailedCoupons = [];
 
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/5/public/values?alt=json', function(data, xhr) {
+            console.log("monthly coupons");
             console.log('gdoc : ' + xhr);
             console.log(data);
 
@@ -2114,14 +2687,15 @@ function initApp() {
                 } else {
                     for (var i = 0; i < context.length; i++) {
                         mdcoupons.push(context[i].gsx$name.$t);
-                        if (context[i].gsx$image.$t == "") {
+                        if (context[i].gsx$image.$t === "") {
                             context[i].gsx$image.$t = "img/coupon placeholders/voucher-1.jpg";
                         }
                         html = html.concat(template(context[i]));
                     }
-                    console.log(mdcoupons)
+                    console.log(mdcoupons);
                 }
 
+                $('#md-items').html('');
                 $('#md-items').append(html);
                 $('.loader').fadeOut(200);
 
@@ -2129,13 +2703,14 @@ function initApp() {
                 checkRedeemed(localStorage.id);
             } else {
                 $('.loader').fadeOut(200);
-                errorHandler("An error has occured while trying to access get discount coupons, please try again.");
+                errorHandler("An error has occured while trying to access get monthly coupons, please try again.");
             }
         });
     }
 
     function checkRedeemed(id) {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/4/public/values?alt=json', function(data, xhr) {
+            console.log("check redeemed coupons");
             console.log('gdoc : ' + xhr);
             console.log(data);
 
@@ -2150,24 +2725,24 @@ function initApp() {
 
 
 
-                        if (parseInt(context[i].gsx$id.$t) == id) {
+                        if (parseInt(context[i].gsx$id.$t) === id) {
                             var identifier = context[i].gsx$identifier.$t;
                             var type = context[i].gsx$type.$t;
                             var parseType = type.toLowerCase();
 
                             $('#mb-dc-items .coupon-block[data-identifier="' + identifier + '"]').addClass('availed');
 
-                            if (parseType == "monthly") {
+                            if (parseType === "monthly") {
                                 $('#md-items .coupon-block').each(function() {
                                     var d = $(this).attr('data-identifier');
-                                    if (d == identifier) {
+                                    if (d === identifier) {
                                         $(this).addClass('availed');
                                         monthlyAvailed++;
                                     }
-                                })
+                                });
                             }
 
-                            if (monthlyAvailed == 3) {
+                            if (monthlyAvailed === 3) {
                                 $('#md-items').hide();
                                 $('#monthly-dc-items').addClass('all-availed');
                             }
@@ -2221,7 +2796,7 @@ function initApp() {
             "email": localStorage.user,
             "message": message,
             "serial": serial,
-            "provider": (provider == "" || provider == undefined || provider == null) ? "admin@growmymusic.com" : provider
+            "provider": (provider === "" || provider === undefined || provider === null) ? "admin@growmymusic.com" : provider
         };
 
         performHttp(url, "post", httpData, function(response) {
@@ -2236,11 +2811,12 @@ function initApp() {
             console.log(response.error);
             $('#ca-wrap').hide();
             errorHandler("An error has occured while trying to register your chosen monthly discounts, please try again later");
-        })
+        });
     }
 
     function getLinks() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/6/public/values?alt=json', function(data, xhr) {
+            console.log("get links");
             console.log('gdoc : ' + xhr);
             console.log(data);
 
@@ -2271,22 +2847,46 @@ function initApp() {
         $('#mail-modal').fadeOut();
 
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
+        var action = testMode == true ? "membershipcalendarmailtest" : "membershipcalendarmail";
+        var tileType = type.indexOf("-") > 0 ? type.replace("-","") : "";
+        var length
         var httpData = {
-            "action": "membershipcalendarmail",
+            "action": action,
             "MSFFirstName": firstname,
             "MSFLastName": lastname,
             "MSFEmail": email,
             "MSFSubject": subject,
             "MSFMessage": message,
         };
-        performHttp(url, "post", httpData, function(response) {
-            console.log(response);
-            mailModalSuccess(type);
-        }, function(response) {
-            console.log(response.status);
-            console.log(response.error);
-            errorHandler("An error has occured while trying to send your submission, please try again later");
-        })
+        var subtype = type;
+        showLoader();
+
+
+            performHttp(url, "post", httpData, function(response) {
+                console.log(response);
+                
+                mailModalSuccess(type);
+                logProfileSubmissions(subtype);
+
+                $('.members-calendar-tiles[data-type="'+type+'"]').addClass('submitted');
+                localStorage.setItem("submitted"+tileType,"true");
+                if ( parseInt(localStorage.activemc) > 0){
+                    var amc = parseInt(localStorage.activemc) - 1;
+                    localStorage.setItem('activemc',amc);
+                    $('#b-mc .length').text(localStorage.activemc);
+                } else {
+                    localStorage.setItem('activemc',"0");
+                }
+                $('.loader').fadeOut();
+            }, function(response) {
+                $('.loader').fadeOut();
+                console.log(response.status);
+                console.log(response.error);
+                errorHandler("An error has occured while trying to send your submission, please try again later");
+            });
+        
+
+        
     }
 
     function setMailModal(content, header, subheader, type) {
@@ -2297,6 +2897,23 @@ function initApp() {
 
         $('.error-validation').each(function() {
             $(this).hide();
+        });
+        
+        if ( $('.mm-noprofile').length < 1 ){
+            $('#mail-modal > div').append('<div class="mm-noprofile"><p>You haven’t competed and saved your artist profile yet. Please complete now so you can submit.</p><button type="button" id="mm-profile">Complete your profile details</button></div>');
+        }
+        
+        if ( typeof(localStorage.profile) != "undefined"){
+            $('#mail-modal').addClass('hasprofile');
+            $('#mail-modal').removeClass('noprofile');
+        } else {
+            $('#mail-modal').removeClass('hasprofile');
+            $('#mail-modal').addClass('noprofile');
+        }
+
+        $('#mm-profile').click(function(){
+            $('#mail-modal').hide();
+            $('#profile-builder').fadeIn();
         })
 
         $('#mail-modal').fadeIn(200);
@@ -2305,25 +2922,25 @@ function initApp() {
     function mailModalSuccess(type) {
         switch (type) {
             case 'spotify':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'bmg':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'hit-producer':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'writing-holidays':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br>We’ll be in touch if you’re selected.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br>We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'music-sync':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'booking-agent':
-                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We review EVERY submission and endeavour to provide feedback to everyone.</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case '2day-seminar':
-                $('#thankyou-wrap p').html('<p>Thank you for your application.  <br> We’ll be in touch with more information shortly. Get excited, our Writing holiday’s blow heads off and transform careers entirely!</p>');
+                $('#thankyou-wrap p').html('<p>Thank you for your application.  <br> We\'ll be in touch with more information shortly. Get excited, our 2 Day Seminar blows heads off and transform careers entirely!</p>');
                 break;
         }
         $('#thankyou-wrap').fadeIn(200);
@@ -2333,11 +2950,127 @@ function initApp() {
             } else {
                 $('#thankyou-wrap').fadeOut(200);
             }
-        })
+        });
     }
 
-    function membershipCalendarTiles() {
+    function getActiveMc(){
+        console.log("active mc qty :"+localStorage.activemc);
+
+        if ( typeof(localStorage.activemc) != "undefined") {
+            var parseActiveMc = parseInt(localStorage.activemc);
+            console.log('puling active mc from local');
+            if (  parseActiveMc == 0 || parseActiveMc < 0 || parseActiveMc == NaN){
+                $('#b-mc .length').hide();
+            } else {
+                $('#b-mc .length').show();
+                $('#b-mc .length').text(localStorage.activemc);
+            }
+            
+        } else {
+            $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
+                console.log("mc tiles");
+                console.log('gdoc : ' + xhr);
+                console.log(data);
+                console.log('puling active mc from db');
+
+
+                if (xhr == 200 || xhr == "success") {
+                    var context = data.feed.entry;
+                    console.log(context);
+                    
+                    activeMC = 0;
+
+                    if (context.length > 0) {
+                         for (var i = 0; i < context.length; i++) {
+                            if (context[i].gsx$status.$t === "A") {
+                                activeMC++;
+                            }
+                         }
+
+                        localStorage.setItem('activemc',activeMC);
+                        $('#b-mc .length').show();
+                        $('#b-mc .length').text(localStorage.activemc);
+                    }
+                }
+            });
+        }
+    }
+
+    function getSubmittedMC(){
+        var id = localStorage.id;
+        var submitteditems = 0;
+        getSubmissionNumber();
+
+        $.getJSON('https://spreadsheets.google.com/feeds/list/1Xz76QH1Cq0s3gQrcpwQCJ-fHvjjz6SKOeTGL-CKBhb0/1/public/values?alt=json', function(data, xhr) {
+                console.log("mc tiles");
+                console.log('gdoc : ' + xhr);
+                console.log(data);
+                console.log('puling submitted items from db');
+
+
+                if (xhr == 200 || xhr == "success") {
+                    var context = data.feed.entry;
+                    console.log(context);
+                    if (context != "undefined" || context != undefined){
+                        if (context.length > 0) {
+                             for (var i = 0; i < context.length; i++) {
+                                if (context[i].gsx$id.$t == id) {
+                                    if(context[i].gsx$submissionnumber.$t == localStorage.submissionnumber) {
+                                        var submissiontype = context[i].gsx$type.$t;
+                                        var parsesubmissiontype = submissiontype.replace("-","");
+                                        var submittedItem = "submitted"+parsesubmissiontype;
+                                        localStorage.setItem(submittedItem,"true");
+                                        submitteditems++;
+                                        console.log('submitted items:' + submitteditems)
+                                    }
+                                }
+                             }
+                        }
+                    }
+                    if(typeof(localStorage.activemc) != "undefined"){
+                        var active_mc = parseInt(localStorage.activemc) - parseInt(submitteditems);
+                        console.log("submitted items from db:"+active_mc);
+                        if ( active_mc > 0) {
+                            localStorage.setItem('activemc',active_mc);
+                            getActiveMc();
+                        } else if ( active_mc < 1 ) {
+                            localStorage.setItem('activemc',"0");
+                            getActiveMc();
+                        }
+                    }
+                }
+        })
+
+    }
+
+    function getSubmissionNumber(){
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
+            console.log("mc tiles");
+            console.log('gdoc : ' + xhr);
+            console.log(data);
+            if (xhr == 200 || xhr == "success") {
+                var context = data.feed.entry;
+                console.log(context);
+                for (var i = 0; i < context.length; i++) {
+                    switch (context[i].gsx$name.$t) {
+                        case "Submission Number":
+                        if (typeof(localStorage.submissionnumber) != "undefined"){
+                            if ( parseInt(localStorage.submissionnumber) != parseInt(context[i].gsx$number.$t) ){
+                                resetMC();
+                                getActiveMc();
+                            }
+                        } else {
+                            localStorage.setItem("submissionnumber",context[i].gsx$number.$t);
+                        }
+                    }
+                }
+            }
+        })
+    }
+    
+    function membershipCalendarTiles(callback) {
+        $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
+            console.log("mc tiles");
             console.log('gdoc : ' + xhr);
             console.log(data);
 
@@ -2346,49 +3079,67 @@ function initApp() {
                 console.log(context);
                 for (var i = 0; i < context.length; i++) {
                     switch (context[i].gsx$name.$t) {
+                        
                         case "Spotify":
                             $('.members-calendar-tiles[data-type="spotify"]').attr('data-msg', context[i].gsx$message.$t);
-                            if (context[i].gsx$status.$t == "A") {
-                                $('.members-calendar-tiles[data-type="spotify"] .tile-wrap').removeClass('locked');
+                            if (context[i].gsx$status.$t === "A") {
+                                $('.members-calendar-tiles[data-type="spotify"] .tile-wrap').removeClass('locked').addClass('active');
                             } else {
-                                $('.members-calendar-tiles[data-type="spotify"] .tile-wrap').addClass('locked');
+                                $('.members-calendar-tiles[data-type="spotify"] .tile-wrap').addClass('locked').removeClass('active');
+                            }
+                            if ( typeof(localStorage.submittedspotify) != "undefined"){
+                                 $('.members-calendar-tiles[data-type="spotify"]').addClass('submitted');
                             }
                             break;
                         case "BMG":
                             $('.members-calendar-tiles[data-type="bmg"]').attr('data-msg', context[i].gsx$message.$t);
-                            if (context[i].gsx$status.$t == "A") {
-                                $('.members-calendar-tiles[data-type="bmg"] .tile-wrap').removeClass('locked');
+                            if (context[i].gsx$status.$t === "A") {
+                                $('.members-calendar-tiles[data-type="bmg"] .tile-wrap').removeClass('locked').addClass('active');
                             } else {
-                                $('.members-calendar-tiles[data-type="bmg"] .tile-wrap').addClass('locked');
+                                $('.members-calendar-tiles[data-type="bmg"] .tile-wrap').addClass('locked').removeClass('active');
+                            }
+                            if ( typeof(localStorage.submittedbmg) != "undefined"){
+                                 $('.members-calendar-tiles[data-type="bmg"]').addClass('submitted');
                             }
                             break;
                         case "Writing Holidays":
                             $('.members-calendar-tiles[data-type="writing-holidays"]').attr('data-msg', context[i].gsx$message.$t);
-                            if (context[i].gsx$status.$t == "A") {
-                                $('.members-calendar-tiles[data-type="writing-holidays"] .tile-wrap').removeClass('locked');
+                            if (context[i].gsx$status.$t === "A") {
+                                $('.members-calendar-tiles[data-type="writing-holidays"] .tile-wrap').removeClass('locked').addClass('active');
                             } else {
-                                $('.members-calendar-tiles[data-type="writing-holidays"] .tile-wrap').addClass('locked');
+                                $('.members-calendar-tiles[data-type="writing-holidays"] .tile-wrap').addClass('locked').removeClass('active');
+                            }
+                            if ( typeof(localStorage.submittedwritingholidays) != "undefined"){
+                                 $('.members-calendar-tiles[data-type="writing-holidays"]').addClass('submitted');
                             }
                             break;
                         case "Music Sync":
                             $('.members-calendar-tiles[data-type="music-sync"]').attr('data-msg', context[i].gsx$message.$t);
-                            if (context[i].gsx$status.$t == "A") {
-                                $('.members-calendar-tiles[data-type="music-sync"] .tile-wrap').removeClass('locked');
+                            if (context[i].gsx$status.$t === "A") {
+                                $('.members-calendar-tiles[data-type="music-sync"] .tile-wrap').removeClass('locked').addClass('active');
                             } else {
-                                $('.members-calendar-tiles[data-type="music-sync"] .tile-wrap').addClass('locked');
+                                $('.members-calendar-tiles[data-type="music-sync"] .tile-wrap').addClass('locked').removeClass('active');
+                            }
+                            if ( typeof(localStorage.submittedmusicsync) != "undefined"){
+                                 $('.members-calendar-tiles[data-type="music-sync"]').addClass('submitted');
                             }
                             break;
                         case "Booking Agent":
                             $('.members-calendar-tiles[data-type="booking-agent"]').attr('data-msg', context[i].gsx$message.$t);
-                            if (context[i].gsx$status.$t == "A") {
-                                $('.members-calendar-tiles[data-type="booking-agent"] .tile-wrap').removeClass('locked');
+                            if (context[i].gsx$status.$t === "A") {
+                                $('.members-calendar-tiles[data-type="booking-agent"] .tile-wrap').removeClass('locked').addClass('active');
                             } else {
-                                $('.members-calendar-tiles[data-type="booking-agent"] .tile-wrap').addClass('locked');
+                                $('.members-calendar-tiles[data-type="booking-agent"] .tile-wrap').addClass('locked').removeClass('active');
+                            }
+                            if ( typeof(localStorage.submittedbookingagent) != "undefined"){
+                                 $('.members-calendar-tiles[data-type="booking-agent"]').addClass('submitted');
                             }
                             break;
                     }
                 }
+                callback();
             } else {
+                errorHandler('An error has occured while trying to reach the Membership Calendar Database. Please try again later');
                 $('.loader').fadeOut(200);
             }
         });
@@ -2406,8 +3157,11 @@ function initApp() {
                 console.log(data);
 
                 for (var i = 0; i < context.length; i++) {
-                    html = html.concat(template(context[i]))
+                    html = html.concat(template(context[i]));
                 }
+
+                $('#mb-dc-items select').html('');
+                $('#monthly-dc-items select').html('');
 
                 $('#mb-dc-items select').append(html);
                 $('#monthly-dc-items select').append(html);
@@ -2418,7 +3172,7 @@ function initApp() {
                 $('.loader').fadeOut(200);
                 errorHandler("An error has occured while trying to access the hit producer catalog database, please try again.");
             }
-        })
+        });
     }
 
     function monthlyFilters() {
@@ -2428,28 +3182,28 @@ function initApp() {
             if (x != "All") {
                 $('#md-items .coupon-block').each(function() {
                     $(this).slideUp(200);
-                })
+                });
 
                 setTimeout(function() {
                     $('#md-items .coupon-block[data-category="' + x + '"]').each(function() {
                         $(this).slideDown(200);
-                    })
-                }, 1000)
+                    });
+                }, 1000);
 
             } else {
 
                 $('#md-items .coupon-block').each(function() {
                     $(this).slideDown(200);
-                })
+                });
 
                 setTimeout(function() {
                     $('#md-items .coupon-block').each(function() {
                         $(this).fadeIn();
-                    })
-                }, 500)
+                    });
+                }, 500);
 
             }
-        })
+        });
     }
 
     function standardFilters() {
@@ -2459,28 +3213,28 @@ function initApp() {
             if (x != "All") {
                 $('#sd-items .coupon-block').each(function() {
                     $(this).slideUp(200);
-                })
+                });
 
                 setTimeout(function() {
                     $('#sd-items .coupon-block[data-category="' + x + '"]').each(function() {
                         $(this).slideDown(200);
-                    })
-                }, 1000)
+                    });
+                }, 1000);
 
             } else {
 
                 $('#sd-items .coupon-block').each(function() {
                     $(this).slideDown(200);
-                })
+                });
 
                 setTimeout(function() {
                     $('#sd-items .coupon-block').each(function() {
                         $(this).fadeIn();
-                    })
-                }, 500)
+                    });
+                }, 500);
 
             }
-        })
+        });
     }
 
     function couponTabs() {
@@ -2490,7 +3244,7 @@ function initApp() {
                 var target = $(this).attr('data-loc');
                 $('.coupon-tab').each(function() {
                     $(this).removeClass('active');
-                })
+                });
                 $(this).addClass('active');
                 $('#monthly-dc-items').hide();
                 $('#mb-dc-items').hide();
@@ -2516,11 +3270,11 @@ function initApp() {
                 var userName = localStorage.firstname + ' ' + localStorage.lastname;
                 var userEmail = localStorage.user;
                 var userId = localStorage.id;
-                $('.loader').fadeIn(200);
+                showLoader("");
 
-                logCoupons(userId, userName, userEmail, couponName, discount, identifier, couponCode, provider, serial, type)
-            })
-        })
+                logCoupons(userId, userName, userEmail, couponName, discount, identifier, couponCode, provider, serial, type);
+            });
+        });
     }
 
     function setPages() {
@@ -2528,6 +3282,7 @@ function initApp() {
             url: "https://s3.amazonaws.com/gmmonlinecourse2017/gmm_app/workshop.json",
             dataType: 'json',
             type: 'GET',
+            async: true,
             success: function(data) {
                 console.log(data);
                 var source = $("#ind-vid-template").html();
@@ -2547,7 +3302,7 @@ function initApp() {
                 console.log(errorThrown);
                 errorHandler("An error has occured while trying to get workshops, please try again.");
             }
-        })
+        });
 
         $.getJSON("https://s3.amazonaws.com/gmmonlinecourse2017/gmm_app/digitalmarketing.json", function(data) {
             console.log('digital marketing');
@@ -2568,6 +3323,7 @@ function initApp() {
             url: "https://s3.amazonaws.com/gmmonlinecourse2017/gmm_app/modules.json",
             dataType: 'json',
             type: 'GET',
+            async: true,
             success: function(data) {
                 console.log(data);
                 var source = $("#ind-vid-template").html();
@@ -2590,24 +3346,24 @@ function initApp() {
                         html2 = html2.concat(template(context2[z]));
                     }
 
-                    $('#module-items').append(html)
+                    $('#module-items').append(html);
                     $('#module-items .section-slide').eq(i).find('.slider').append(html2);
                 }
 
-                $.initialize("#modules-con .slider", function() {
-                    if ($(this).find('.tile').length > 1) {
-                        $(this).slick({
-                            arrows: false,
-                            variableWidth: true,
-                            infinite: true,
-                            centerMode: true,
-                            speed: 200
-                        })
-                    } else {
-                        $(this).addClass('single')
-                    }
+                // $.initialize("#modules-con .slider", function() {
+                //     if ($(this).find('.tile').length > 1) {
+                //         $(this).slick({
+                //             arrows: false,
+                //             variableWidth: true,
+                //             infinite: true,
+                //             centerMode: true,
+                //             speed: 200
+                //         });
+                //     } else {
+                //         $(this).addClass('single');
+                //     }
 
-                });
+                // });
                 setTiles();
             },
             error: function(jqXHR, textStatus, errorThrown) {
@@ -2616,12 +3372,13 @@ function initApp() {
                 console.log(errorThrown);
                 errorHandler("An error has occured while trying to get course modules, please try again.");
             }
-        })
+        });
 
         $.ajax({
             url: "https://s3.amazonaws.com/gmmonlinecourse2017/gmm_app/masterclass.json",
             dataType: 'json',
             type: 'GET',
+            async: true,
             success: function(data) {
                 console.log(data);
                 var source = $("#ind-vid-template").html();
@@ -2645,24 +3402,24 @@ function initApp() {
                         html2 = html2.concat(template(context2[z]));
                     }
 
-                    $('#masterclass-items').append(html)
+                    $('#masterclass-items').append(html);
                     $('#masterclass-items .section-slide').eq(i).find('.slider').append(html2);
                 }
 
-                $.initialize("#masterclass-con .slider", function() {
-                    if ($(this).find('.tile').length > 1) {
-                        $(this).slick({
-                            arrows: false,
-                            variableWidth: true,
-                            infinite: true,
-                            centerMode: true,
-                            speed: 200
-                        })
-                    } else {
-                        $(this).addClass('single')
-                    }
+                // $.initialize("#masterclass-con .slider", function() {
+                //     if ($(this).find('.tile').length > 1) {
+                //         $(this).slick({
+                //             arrows: false,
+                //             variableWidth: true,
+                //             infinite: true,
+                //             centerMode: true,
+                //             speed: 200
+                //         });
+                //     } else {
+                //         $(this).addClass('single');
+                //     }
 
-                });
+                // });
                 setTiles();
             },
             error: function(jqXHR, textStatus, errorThrown) {
@@ -2671,10 +3428,10 @@ function initApp() {
                 console.log(errorThrown);
                 errorHandler("An error has occured while trying to get course modules, please try again.");
             }
-        })
+        });
     }
 
-    function getResources() {
+    function getResources(callback) {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/10/public/values?alt=json', function(data, xhr) {
 
             if (xhr == 200 || xhr == "success") {
@@ -2686,20 +3443,20 @@ function initApp() {
                 console.log(data);
 
                 for (var i = 0; i < context.length; i++) {
-                    html = html.concat(template(context[i]))
+                    html = html.concat(template(context[i]));
                 }
-
+                $('#resources-items').html('');
                 $('#resources-items').append(html);
                 $('.loader').fadeOut(200);
-
+                callback();
             } else {
                 $('.loader').fadeOut(200);
                 errorHandler("An error has occured while trying to access the resources database, please try again.");
             }
-        })
+        });
     }
 
-    function getDmResources() {
+    function getDmResources(callback) {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/11/public/values?alt=json', function(data, xhr) {
 
             if (xhr == 200 || xhr == "success") {
@@ -2711,16 +3468,17 @@ function initApp() {
                 console.log(data);
 
                 for (var i = 0; i < context.length; i++) {
-                    html = html.concat(template(context[i]))
+                    html = html.concat(template(context[i]));
                 }
-
+                $('#dm-resources').html('');
                 $('#dm-resources').append(html);
                 $('.loader').fadeOut(200);
+                callback();
             } else {
                 $('.loader').fadeOut(200);
                 errorHandler("An error has occured while trying to access the resources database, please try again.");
             }
-        })
+        });
     }
 
     /* ==================================
@@ -2729,37 +3487,249 @@ function initApp() {
     function checkUnlock(status) {
         if (status == 'unlock') {
             $('.locked').each(function() {
-                $(this).removeClass('locked')
+                $(this).removeClass('locked');
             });
             $('body').addClass('testing');
             $('.dismiss').click(function() {
                 $('body').removeClass('testing');
-            })
+            });
         }
     }
     /* ==================================
                 EVENTS
     ===================================*/
+    function backtoprevious() {
+        // $('.navigation').removeClass('content').addClass('home');
+        //     $('#inner-content').removeClass('content');
+        //     $(window).scrollTop(0);
+        //     setTimeout(function() {
+        //         $('.content-wrap').fadeIn(200);
+        //     }, 300);
+
+
+        //     setTimeout(function() {
+        //         $('.content-body').each(function() {
+        //             $(this).hide();
+        //         });
+        //         $('#inner-content').hide();
+        //     }, 300);
+
+        //     if (cordova) {
+        //         screen.orientation.lock('portrait');
+        //     }
+
+        //     destroyBannerAds();
+        removeAllVideos();
+
+        if (!$('#my-account-page').hasClass('ma-active') && $('#inner-content').hasClass('content') && !$('.video').is(':visible')) {
+            $('.navigation').removeClass('content').addClass('home');
+            $('#bottom-nav').removeClass('content');
+            $('#inner-content').toggleClass('content');
+            $('.content-wrap').fadeIn(200);
+            setTimeout(function() {
+                $('.content-body').each(function() {
+                    $(this).hide();
+                });
+                $('#inner-content').hide();
+            }, 300);
+        } else if (!$('#my-account-page').hasClass('ma-active') && $('#inner-content').hasClass('content') && $('.video').is(':visible')) {
+            var vid = $('#video')[0];
+            vid.pause();
+            $('.video').fadeOut(200);
+            $('#mp4').attr('src', '');
+            destroyBannerAds();
+            if (cordova) {
+                screen.orientation.lock('portrait');
+            }
+            $('.video').fadeOut(200);
+        } else if ($('#my-account-page').hasClass('ma-active') && !$('#inner-content').hasClass('content')) {
+            $('.content-wrap').fadeIn(200);
+            $('.navigation').fadeIn(200);
+            $('#my-account-page').removeClass('ma-active').fadeOut(200);
+        } else if ($('#my-account-page').hasClass('ma-active') && $('#inner-content').hasClass('content')) {
+            $('.content-wrap').fadeIn(200);
+            $('.inner-content').fadeIn(200);
+            $('.navigation').fadeIn(200);
+            $('#my-account-page').removeClass('ma-active').fadeOut(200);
+        } else if ($('#contact-page').hasClass('c-active')) {
+            $('.content-wrap').fadeIn(200);
+            $('.inner-content').fadeIn(200);
+            $('.navigation').fadeIn(200);
+            $('#contact-page').removeClass('c-active').fadeOut(200);
+        } else if ($('.login-page').hasClass('active')) {
+            $('.first-page').show();
+            $('.login-page').removeClass('active');
+            setTimeout(function() {
+                $('#log-in-form').hide();
+                $('#reg-form').hide();
+            }, 300);
+        }
+    }
+
+    function showSlider(){
+        $('#t-slider').show();
+
+        $('#t-slide-wrap').slick({
+                arrows: false,
+                dots: true,
+                infinite: false,
+                autoplay: false,
+                speed:200
+        });
+
+        $('button#t-profile').click(function(){
+            showLoader("checking for existing profiles");
+            getProfile();
+            initProfileBtns();
+            $('#profile-builder').fadeIn();
+        });
+
+        $('button#t-close').click(function(){
+            $('html, body').scrollTop(0);
+            $('#t-slider').fadeOut();
+            localStorage.setItem('slide','true');
+        });
+    }
 
     function initEvents() {
+        // $('#b-contact').click(function() {
+        //     $('#contact.ipage').click();
+        // });
+
+        // $('#b-mc').click(function() {
+        //     $('#memberscalendar.ipage').click();
+        // });
+
+        $('#bottom-nav span').each(function(){
+            $(this).click(function(){
+                var target = $(this).attr('data-targetcon');
+                $('#bottom-nav span').each(function(){
+                    $(this).removeClass('active');
+                });
+                $(this).addClass('active');
+                $('#h-content .category-section').each(function(){
+                    $(this).stop().hide(300);
+                    $('.category-section[data-cat="'+target+'"]').stop().show(300);
+                });
+            })
+        })
+
+        // Take photo from camera
+        $('#take-photo').click(function() {
+            navigator.camera.getPicture(onSuccessImage, onFailImage, {
+                quality: 20,
+                destinationType: Camera.DestinationType.FILE,
+                targetWidth: 600,
+                targetHeight:600,
+                correctOrientation: true
+            });
+        });
+
+        // Select from gallery 
+        $("#open-gallery").click(function() {
+            navigator.camera.getPicture(onSuccessImage, onFailImage, {
+                quality: 20,
+                sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
+                allowEdit: true,
+                destinationType: Camera.DestinationType.DATA_URL,
+                targetWidth: 600,
+                targetHeight:600,
+                correctOrientation: true
+            });
+        });
+
+        // Change image source
+        function onSuccessImage(imageData) {
+            console.log(imageData);
+            // var b64;
+            // window.plugins.Base64.encodeFile(imageData, function(base64){
+            //     console.log('file base64 encoding: ' + base64);
+            //     b64 = base64;
+            // });
+            var image = document.getElementById('profile-photo-img');
+            var imageDataName = 'data:image/jpeg;base64,' + imageData;
+            image.src = imageDataName;
+            $('#image-data').val(imageData);
+        }
+
+        function onFailImage(message) {
+            alert('Upload image failed: ' + message);
+        }
+
+
         $('.start-trial').click(function() {
             $('#first-use').hide();
             logTrial(localStorage.id);
         });
+
+
+        // CHECK SWIPE FUNCTIONS
+        // $('#inner-content').on('swiperight', function() {
+        //     console.log('swipe left');
+        //     backtoprevious();
+        // });
+
+        // $('#my-account-page').on('swiperight', function() {
+        //     console.log('swipe left');
+        //     backtoprevious();
+        // });
+
+        // $('.video').on('swiperight', function() {
+        //     console.log('swipe left');
+        //     backtoprevious();
+        // });
+
+        function swipedRight(){
+            backtoprevious();
+        }
+
+        $('#inner-content').swipe( {
+            swipeRight:function(event, direction, distance, duration, fingerCount) {
+              console.log("You swiped " + direction );
+              swipedRight();   
+            }
+        });
+
+        $('#my-account-page').swipe( {
+            swipeRight:function(event, direction, distance, duration, fingerCount) {
+              console.log("You swiped " + direction );
+              swipedRight();   
+            }
+        });
+
+        $('.video').swipe( {
+            swipeRight:function(event, direction, distance, duration, fingerCount) {
+              console.log("You swiped " + direction );
+              swipedRight();   
+            }
+        });
+
+        // var icContent = $('#inner-content');
+        // var vidContent = $('.video');
+        // var accountContent = $('#my-account-page');
+
+        // var hammerOptions = {
+
+        // };
+        // $(icContent).hammer(hammerOptions).bind("panright", backtoprevious);
+        // $(vidContent).hammer(hammerOptions).bind("panright", backtoprevious);
+        // $(accountContent).hammer(hammerOptions).bind("panright", backtoprevious);
+
+        
 
         $('#success-trial').click(function(e) {
             if (e.target != this) {
                 return false;
             } else {
                 removeAllVideos();
-                localStorage.setItem("firstuse", "true");
+                localStorage.setItem("firstuse", "false");
                 $('#success-trial').fadeOut(200);
             }
-        })
+        });
 
         $('#success-trial .lm-close').click(function(e) {
             $('#success-trial').fadeOut(200);
-        })
+        });
 
         $('#inviteafriend').click(function(e) {
             e.preventDefault();
@@ -2783,7 +3753,7 @@ function initApp() {
                 setTimeout(function() {
                     $('#forgot-first').show();
                     $('#forgot-second').hide();
-                })
+                });
             }
         });
 
@@ -2791,68 +3761,87 @@ function initApp() {
             e.preventDefault();
             var email = encodeURIComponent($('#forgotemail').val());
 
-            $('.loader').fadeIn(200);
-            var url = "https://growmymusic.com/api/user/retrieve_password/";
-
-            cordovaHTTP.post(url, {
-                "user_login": email,
-                "insecure": "cool"
-            }, {
-                Authorization: "Basic YnVubnlmaXNoY3JlYXRpdmVzOmJ1bm55aGl0bzYyMQ=="
-            }, function(response) {
-
-                console.log("cordovahttp subscription : " + response);
-                console.log(response);
-                var data = JSON.parse(response.data)
-
-                if (data.status == 'ok') {
-                    $('.loader').fadeOut(200);
-                    $('#forgot-first').hide();
-                    $('#forgot-second').show();
-                } else if (data.status == 'error') {
-                    $('.loader-message').text('');
-                    $('.loader').fadeOut(200);
-                    setTimeout(function() {
-                        $('.login-form p.error').stop().slideDown();
-                    }, 500)
-                } else {
-                    errorHandler("An error has occured please try again later.");
+            $.ajax({
+                beforeSend: function() {
+                    showLoader("");
+                },
+                type: "POST",
+                url: "https://growmymusic.com/api/user/retrieve_password/?user_login=" + email + "&insecure=cool",
+                crossDomain: true,
+                cache: false,
+                success: function(data, xhr) {
+                    if ((xhr === 200 || xhr == "success") && data.status == 'ok') {
+                        $('.loader').fadeOut(200);
+                        $('#forgot-first').hide();
+                        $('#forgot-second').show();
+                    } else if ((xhr === 200 || xhr == "success") && data.status == 'error') {
+                        $('.loader').fadeOut(200);
+                        setTimeout(function() {
+                            $('.login-form p.error').stop().slideDown();
+                        }, 500);
+                    } else {
+                        errorHandler("An error has occured please try again later.");
+                    }
                 }
-            }, function(response) {
-                console.log(response.status);
-                console.log(response.error);
-                $('.loader').fadeOut(200);
-
-                errorHandler("An error has occured please try again later.");
             });
+            // cordovaHTTP.post(url, {
+            //     "user_login": email,
+            //     "insecure": "cool"
+            // }, {
+            //     Authorization: "Basic YnVubnlmaXNoY3JlYXRpdmVzOmJ1bm55aGl0bzYyMQ=="
+            // }, function(response) {
+
+            //     console.log("cordovahttp subscription : " + response);
+            //     console.log(response);
+            //     var data = JSON.parse(response.data);
+
+            //     if (data.status == 'ok') {
+            //         $('.loader').fadeOut(200);
+            //         $('#forgot-first').hide();
+            //         $('#forgot-second').show();
+            //     } else if (data.status == 'error') {
+            //         $('.loader-message').text('');
+            //         $('.loader').fadeOut(200);
+            //         setTimeout(function() {
+            //             $('.login-form p.error').stop().slideDown();
+            //         }, 500);
+            //     } else {
+            //         errorHandler("An error has occured please try again later.");
+            //     }
+            // }, function(response) {
+            //     console.log(response.status);
+            //     console.log(response.error);
+            //     $('.loader').fadeOut(200);
+
+            //     errorHandler("An error has occured please try again later.");
+            // });
         });
 
         $('.login-input').each(function() {
             $(this).on('focus', function() {
                 if ($(this).val() == '') {
-                    $(this).addClass('focus')
-                    $(this).prev().addClass('focus')
-                    $(this).next().addClass('focus')
+                    $(this).addClass('focus');
+                    $(this).prev().addClass('focus');
+                    $(this).next().addClass('focus');
                 } else {
-                    $(this).prev().addClass('focus')
-                    $(this).next().addClass('focus')
+                    $(this).prev().addClass('focus');
+                    $(this).next().addClass('focus');
                 }
             })
             $(this).on('blur', function() {
                 if ($(this).val() == '') {
-                    $(this).removeClass('focus')
-                    $(this).prev().removeClass('focus')
-                    $(this).next().removeClass('focus')
+                    $(this).removeClass('focus');
+                    $(this).prev().removeClass('focus');
+                    $(this).next().removeClass('focus');
                 } else {
-                    $(this).addClass('focus')
-                    $(this).prev().addClass('focus')
-                    $(this).next().addClass('focus')
+                    $(this).addClass('focus');
+                    $(this).prev().addClass('focus');
+                    $(this).next().addClass('focus');
                 }
-            })
+            });
         });
 
         $('span#my-account').click(function() {
-            myAccount();
 
             $('.content-wrap').fadeOut(200);
             $('.inner-content').fadeOut(200);
@@ -2861,7 +3850,9 @@ function initApp() {
             $('#my-account-page').show();
             setTimeout(function() {
                 $('#my-account-page').addClass('ma-active');
-            }, 400)
+            }, 400);
+
+            myAccount();
 
             $('#ma-back').click(function() {
                 if ($('#inner-content').hasClass('content')) {
@@ -2876,13 +3867,13 @@ function initApp() {
 
                 setTimeout(function() {
                     $('#my-account-page').hide();
-                }, 400)
-            })
+                }, 400);
+            });
 
             $('#restore-purchases').click(function() {
                 console.log('restoring inapp purchases');
                 restoreInAppPurchase(localStorage.id);
-            })
+            });
 
             $('#my-account-page .lm-link').each(function() {
                 $(this).click(function(e) {
@@ -2927,14 +3918,16 @@ function initApp() {
                             $('#learnmore-wrap').fadeOut(200);
                             $('body').removeClass('learn-more-open');
                         }
-                    })
-                })
+                    });
+                });
             });
 
             $('#my-account-page div.lm-close').click(function() {
                 $('#learnmore-wrap').fadeOut(200);
                 $('body').removeClass('learn-more-open');
             });
+
+
 
         });
 
@@ -2956,7 +3949,7 @@ function initApp() {
                         }
                     }
                 }
-            })
+            });
         });
 
         $('.lm-link').each(function() {
@@ -3002,8 +3995,8 @@ function initApp() {
                         $('#learnmore-wrap').fadeOut(200);
                         $('body').removeClass('learn-more-open');
                     }
-                })
-            })
+                });
+            });
         });
 
         $('div.lm-close').click(function() {
@@ -3021,7 +4014,7 @@ function initApp() {
             setTimeout(function() {
                 $('#log-in-form').hide();
                 $('#reg-form').hide();
-            }, 300)
+            }, 300);
         });
 
         $('.first-page #log').click(function() {
@@ -3030,7 +4023,7 @@ function initApp() {
             $('.login-page').toggleClass('active');
             setTimeout(function() {
                 $('.first-page').hide();
-            }, 300)
+            }, 300);
         });
 
         $('.first-page #reg').click(function() {
@@ -3039,7 +4032,7 @@ function initApp() {
             $('.login-page').toggleClass('active');
             setTimeout(function() {
                 $('.first-page').hide();
-            }, 300)
+            }, 300);
         });
 
         $('#login').click(function() {
@@ -3062,14 +4055,14 @@ function initApp() {
             $('.login-page #reg-form').slideToggle();
             setTimeout(function() {
                 $('.login-page #log-in-form').slideToggle();
-            }, 200)
+            }, 200);
         });
 
         $('#reg-login').click(function() {
             $('.login-page #log-in-form').slideToggle();
             setTimeout(function() {
                 $('.login-page #reg-form').slideToggle();
-            }, 200)
+            }, 200);
         });
 
         $('#mail-modal').click(function(e) {
@@ -3087,62 +4080,75 @@ function initApp() {
         $('.members-calendar-tiles').each(function() {
             $(this).click(function() {
                 var type = $(this).attr('data-type');
+                var isSubmitted = $(this).hasClass('submitted');
+                var dataType = type.indexOf('-') > -1 ? type.replace("-","") : type;
 
                 if ($(this).find('.tile-wrap').hasClass('locked')) {
                     locked(type, $(this).attr('data-msg'));
-                } else {
+                } 
+                else {
                     switch (type) {
                         case 'spotify':
 
-                            $('#writing-holidays-video').hide();
-                            $('#writing-holidays-video-mp4').attr('src', '');
+                            if ( typeof(localStorage.submittedspotify) == "undefined" ) {
+                                $('#writing-holidays-video').hide();
+                                $('#writing-holidays-video-mp4').attr('src', '');
 
-                            var header = "We service to Spotify twice a year.";
-                            var subheader = "please don't forget to include the link to your music on the message field below";
-                            var content = "Please submit this single to pitch to Spotify  \n\n" +
-                                "[paste link to single here]";
+                                var header = "We service to Spotify twice a year.";
+                                var subheader = "please don't forget to include the link to your music on the message field below";
+                                var content = "Please submit this single to pitch to Spotify  \n\n" +
+                                    "[paste link to single here]";
 
-                            setMailModal(content, header, subheader, type);
+                                setMailModal(content, header, subheader, type);
+
+                                $('#mail-modal button#mail-profile-send').click(function() {
+
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Streaming Services Submission",type);
+                                });
+
+                                $('#mail-modal button#mail-send').click(function() {
+                                    var fn = $('input#mail-fn').val();
+                                    var ln = $('input#mail-ln').val();
+                                    var em = $('input#mail-email').val();
+                                    var msg = $('textarea#mail-msg').val();
+                                    var type = $(this).attr('data-submitlink');
+                                    var subj = "Streaming Services Submission";
+
+                                    if (fn == "") {
+                                        $('input#mail-fn').prev().show();
+                                    }
+                                    if (ln == "") {
+                                        $('input#mail-ln').prev().show();
+                                    }
+                                    if (em == "") {
+                                        $('input#mail-email').prev().show();
+                                    }
+                                    if (msg == "") {
+                                        $('textarea#mail-msg').prev().show();
+                                    }
+
+                                    if (fn != "" && ln != "" && em != "" && msg != "") {
+                                        sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
+                                    }
+                                });
 
 
-                            $('#mail-modal button#mail-send').click(function() {
-                                var fn = $('input#mail-fn').val();
-                                var ln = $('input#mail-ln').val();
-                                var em = $('input#mail-email').val();
-                                var msg = $('textarea#mail-msg').val();
-                                var type = $(this).attr('data-submitlink');
-                                var subj = "Streaming Services Submission";
-;
-                                if (fn == "") {
-                                    $('input#mail-fn').prev().show();
-                                }
-                                if (ln == "") {
-                                    $('input#mail-ln').prev().show();
-                                }
-                                if (em == "") {
-                                    $('input#mail-email').prev().show();
-                                }
-                                if (msg == "") {
-                                    $('textarea#mail-msg').prev().show();
-                                }
-
-                                if (fn != "" && ln != "" && em != "" && msg != "") {
-                                    sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
-                                }
-                            });
-
-
-                            $('#mail-modal .mail-header span').show();
-                            $('#seminar-schedule').hide();
-                            $('#beatstars-items').hide();
-                            $('#mail-form').show();
+                                $('#mail-modal .mail-header span').show();
+                                $('#seminar-schedule').hide();
+                                $('#beatstars-items').hide();
+                                $('#mail-form').hide();
+                                $('.mail-modal-buttons').show();
+                            } else {
+                                locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
+                            }
+                            
                             break;
                         case 'bmg':
                             var url = $(this).attr('data-url');
                             browser(url);
                             break;
                         case 'hit-producer':
-                          
+
                             $('#writing-holidays-video').hide();
                             $('#writing-holidays-video-mp4').attr('src', '');
                             $('#mail-modal .mail-header p.mh-h').text('Hit Producer Catalogs');
@@ -3152,133 +4158,153 @@ function initApp() {
                             $('#mail-form').hide();
                             $('#beatstars-items').show();
                             $('#mail-modal').fadeIn(200);
+
+                            $('.mail-modal-buttons').hide();
                             break;
                         case 'writing-holidays':
-                           
-                            $('#writing-holidays-video').show();
-                            $('#writing-holidays-video-mp4').attr('src', 'https://s3.amazonaws.com/gmmonlinecourse2017/ads/writingholiday.mp4');
-                            var vid = $('#writing-holidays-video')[0];
-                            vid.load();
+                            if ( typeof(localStorage.submittedwritingholidays) == "undefined" ) { 
+                                $('#writing-holidays-video').show();
+                                $('#writing-holidays-video-mp4').attr('src', 'https://s3.amazonaws.com/gmmonlinecourse2017/ads/writingholiday.mp4');
+                                var vid = $('#writing-holidays-video')[0];
+                                vid.load();
 
-                            $('video#writing-holidays-video').click(function() {
-                                if (vid.paused)
-                                    vid.play();
-                                else
-                                    vid.pause();
-                            })
+                                $('video#writing-holidays-video').click(function() {
+                                    if (vid.paused)
+                                        vid.play();
+                                    else
+                                        vid.pause();
+                                });
 
-                            var header = "Express your interest for the next Grow My Music Writing Holiday";
-                            var subheader = "Writing Holiday’s occur a various points throughout the year in all sorts of locations. To be considered complete the form below. NOTE: There is a cost to attend the writing holiday’s. Costs vary depending on the camp. This is simply an expression of interest though from your end to get on our radar.";
-                        
-                            var content = "Full name: \n" +
-                                "Email address: \n" +
-                                "Phone number: \n" +
-                                "State: \n\n" +
-                                "Paste links to 2 songs you’ve written or co-written\n" +
-                                "List what you wrote in each song\n";
+                                var header = "Express your interest for the next Grow My Music Writing Holiday";
+                                var subheader = "Writing Holiday’s occur a various points throughout the year in all sorts of locations. To be considered complete the form below. NOTE: There is a cost to attend the writing holiday’s. Costs vary depending on the camp. This is simply an expression of interest though from your end to get on our radar.";
 
-                            setMailModal(content, header, subheader, type);
+                                var content = "Full name: \n" +
+                                    "Email address: \n" +
+                                    "Phone number: \n" +
+                                    "State: \n\n" +
+                                    "Paste links to 2 songs you’ve written or co-written\n" +
+                                    "List what you wrote in each song\n";
 
+                                setMailModal(content, header, subheader, type);
 
-                            $('#mail-modal button#mail-send').click(function() {
-                                var fn = $('input#mail-fn').val();
-                                var ln = $('input#mail-ln').val();
-                                var em = $('input#mail-email').val();
-                                var msg = $('textarea#mail-msg').val();
-                                var type = $(this).attr('data-submitlink');
-                                var subj = "Writing Holidays Submission";
+                                $('#mail-modal button#mail-profile-send').click(function() {
 
-                                if (fn == "") {
-                                    $('input#mail-fn').prev().show();
-                                }
-                                if (ln == "") {
-                                    $('input#mail-ln').prev().show();
-                                }
-                                if (em == "") {
-                                    $('input#mail-email').prev().show();
-                                }
-                                if (msg == "") {
-                                    $('textarea#mail-msg').prev().show();
-                                }
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Writing Holidays Submission",type);
+                                });
 
-                                if (fn != "" && ln != "" && em != "" && msg != "") {
-                                    sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
-                                }
+                                $('#mail-modal button#mail-send').click(function() {
+                                    var fn = $('input#mail-fn').val();
+                                    var ln = $('input#mail-ln').val();
+                                    var em = $('input#mail-email').val();
+                                    var msg = $('textarea#mail-msg').val();
+                                    var type = $(this).attr('data-submitlink');
+                                    var subj = "Writing Holidays Submission";
 
-                            });
+                                    if (fn === "") {
+                                        $('input#mail-fn').prev().show();
+                                    }
+                                    if (ln === "") {
+                                        $('input#mail-ln').prev().show();
+                                    }
+                                    if (em === "") {
+                                        $('input#mail-email').prev().show();
+                                    }
+                                    if (msg === "") {
+                                        $('textarea#mail-msg').prev().show();
+                                    }
 
-                            $('#mail-modal .mail-header span').show();
-                            $('#seminar-schedule').hide();
-                            $('#beatstars-items').hide();
-                            $('#mail-form').show();
+                                    if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
+                                        sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
+                                    }
+
+                                });
+
+                                $('#mail-modal .mail-header span').show();
+                                $('#seminar-schedule').hide();
+                                $('#beatstars-items').hide();
+                                $('#mail-form').hide();
+                                $('.mail-modal-buttons').show();
+                            } else {
+                                locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
+                            }
                             break;
                         case 'music-sync':
                             var url = $(this).attr('data-url');
                             browser(url);
-                            
+
                             break;
                         case 'booking-agent':
+                            if ( typeof(localStorage.submittedbookingagent) == "undefined" ) { 
+                                $('#writing-holidays-video').hide();
+                                $('#writing-holidays-video-mp4').attr('src', '');
+
+                                var header = "Biannually we pitch motivated artists who are tour-ready to Australia’s most heritage and notable booking agents.";
+                                var subheader = "Please let us know why you or your band deserves to be signed to a booking agent in your artist profile and submit below.";
+
+                                var content = "I'd like to pitch [Insert Artist/Band name] to be signed by a booking agent. Here's some reasons why I believe they'd value me/us on their roster: \n\n" +
+                                    "[Insert, in dot points your achievements, for example \n" +
+                                    "● Who you’ve supported previously?\n" +
+                                    "● Have you sold out any shows yourself?\n" +
+                                    "● Has someone notable posted about you?\n" +
+                                    "● Does your Spotify statistics present well?\n" +
+                                    "● Do you have a strong social media presence? \n" +
+                                    "● Have you had radio play? etc.\n\n" +
+                                    "● Links to 1-2 of your social media accounts\n" +
+                                    "● 1 link to your strongest song]\n\n" +
+                                    "Thank you Grow My Music, you guys are game changers for motivated muso’s!";
+
+                                setMailModal(content, header, subheader, type);
+
+                                $('#mail-modal button#mail-profile-send').click(function() {
+
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Booking Agent Submission",type);
+                                });
+
+                                $('#mail-modal button#mail-send').click(function() {
+                                    var fn = $('input#mail-fn').val();
+                                    var ln = $('input#mail-ln').val();
+                                    var em = $('input#mail-email').val();
+                                    var msg = $('textarea#mail-msg').val();
+                                    var type = $(this).attr('data-submitlink');
+                                    var subj = "Booking Agent Submission";
+
+                                    if (fn === "") {
+                                        $('input#mail-fn').prev().show();
+                                    }
+                                    if (ln === "") {
+                                        $('input#mail-ln').prev().show();
+                                    }
+                                    if (em === "") {
+                                        $('input#mail-email').prev().show();
+                                    }
+                                    if (msg === "") {
+                                        $('textarea#mail-msg').prev().show();
+                                    }
+
+                                    if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
+                                        sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
+                                    }
+                                });
+
+                                $('#mail-modal .mail-header span').show();
+                                $('#seminar-schedule').hide();
+                                $('#beatstars-items').hide();
+                                $('#mail-form').hide();
+                                $('.mail-modal-buttons').show();
+                            } else {
+                                locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
+                            }
+
                             
-                            $('#writing-holidays-video').hide();
-                            $('#writing-holidays-video-mp4').attr('src', '');
-
-                            var header = "Biannually we pitch motivated artists who are tour-ready to Australia’s most heritage and notable booking agents.";
-                            var subheader = "Please let us know why you or your band deserves to be signed to a booking agent below.";
-                            
-                            var content = "I'd like to pitch [Insert Artist/Band name] to be signed by a booking agent. Here's some reasons why I believe they'd value me/us on their roster: \n\n" +
-                                "[Insert, in dot points your achievements, for example \n" +
-                                "● Who you’ve supported previously?\n" +
-                                "● Have you sold out any shows yourself?\n" +
-                                "● Has someone notable posted about you?\n" +
-                                "● Does your Spotify statistics present well?\n" +
-                                "● Do you have a strong social media presence? \n" +
-                                "● Have you had radio play? etc.\n\n" +
-                                "● Links to 1-2 of your social media accounts\n" +
-                                "● 1 link to your strongest song]\n\n" +
-                                "Thank you Grow My Music, you guys are game changers for motivated muso’s!";
-
-                            setMailModal(content, header, subheader, type);
-
-
-                            $('#mail-modal button#mail-send').click(function() {
-                                var fn = $('input#mail-fn').val();
-                                var ln = $('input#mail-ln').val();
-                                var em = $('input#mail-email').val();
-                                var msg = $('textarea#mail-msg').val();
-                                var type = $(this).attr('data-submitlink');
-                                var subj = "Booking Agent Submission";
-                                
-                                if (fn == "") {
-                                    $('input#mail-fn').prev().show();
-                                }
-                                if (ln == "") {
-                                    $('input#mail-ln').prev().show();
-                                }
-                                if (em == "") {
-                                    $('input#mail-email').prev().show();
-                                }
-                                if (msg == "") {
-                                    $('textarea#mail-msg').prev().show();
-                                }
-
-                                if (fn != "" && ln != "" && em != "" && msg != "") {
-                                    sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
-                                }
-                            })
-
-                            $('#mail-modal .mail-header span').show();
-                            $('#seminar-schedule').hide();
-                            $('#beatstars-items').hide();
-                            $('#mail-form').show();
                             break;
                         case '2day-seminar':
-                            
+
                             $('#writing-holidays-video').hide();
                             $('#writing-holidays-video-mp4').attr('src', '');
 
                             var header = "Enrol for the 2-Day Seminar 2018 NOW!";
                             var subheader = "";
-                            
+
                             var content = "I’d like to express my interest for this year’s Seminar. \n\n" +
                                 "Full Name: \n" +
                                 "Email address: \n" +
@@ -3289,6 +4315,12 @@ function initApp() {
                             getSeminarSchedule();
 
                             $('#mail-modal').fadeIn(200);
+
+                            $('#mail-modal button#mail-profile-send').click(function() {
+
+                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "2-Day Seminar Inquiry",type);
+                            });
+
                             $('#mail-modal button#mail-send').click(function() {
                                 var fn = $('input#mail-fn').val();
                                 var ln = $('input#mail-ln').val();
@@ -3296,34 +4328,35 @@ function initApp() {
                                 var msg = $('textarea#mail-msg').val();
                                 var type = $(this).attr('data-submitlink');
                                 var subj = "2-Day Seminar Inquiry";
-                        
-                                if (fn == "") {
+
+                                if (fn === "") {
                                     $('input#mail-fn').prev().show();
                                 }
-                                if (ln == "") {
+                                if (ln === "") {
                                     $('input#mail-ln').prev().show();
                                 }
-                                if (em == "") {
+                                if (em === "") {
                                     $('input#mail-email').prev().show();
                                 }
-                                if (msg == "") {
+                                if (msg === "") {
                                     $('textarea#mail-msg').prev().show();
                                 }
 
-                                if (fn != "" && ln != "" && em != "" && msg != "") {
+                                if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
                                     sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
                                 }
-                            })
+                            });
 
                             $('#mail-modal .mail-header span').hide();
                             $('#seminar-schedule').show();
                             $('#beatstars-items').hide();
-                            $('#mail-form').show();
+                            $('#mail-form').hide();
+                            $('.mail-modal-buttons').show();
                             break;
                     }
                 }
 
-            })
+            });
         });
 
         $('span#intro.nav-icons').click(function() {
@@ -3333,25 +4366,41 @@ function initApp() {
         $('div.ml-close').click(function() {
             $('#mail-modal').fadeOut(200);
             $('#seminar-schedule').html('');
+            removeAllVideos();
         });
-
-        $('.category-title').each(function() {
-            $(this).click(function() {
-                $(this).next().stop().slideToggle(100);
-            })
-        })
     }
 
 
     /* ==================================
                 INIT ORDER
     ===================================*/
+    if( typeof(localStorage.id) != "undefined" ){
+        if (typeof(localStorage.profile) != "undefined") {
+            setProfile();
+            console.log('pulling profiles from local');
+            initProfileBtns();
+        } else {
+            getProfile();
+            console.log('pulling profiles from db');
+            initProfileBtns();
+        }
+    }
+    
+
+    getAds();
 
     /*initAd();*/
     setPages();
 
-    getResources();
-    getDmResources();
+    checkIfAlreadyLoggedIn();
+    console.log('checked if logged in');
+
+    getActiveMc();
+    getSubmissionNumber();
+    getSubmittedMC();
+
+    //getResources();
+    //getDmResources();
     console.log('get resources successful');
 
     initClicks();
@@ -3360,25 +4409,23 @@ function initApp() {
 
 
     getLinks();
-    membershipCalendarTiles();
+
+
     console.log('members discount tiles events status initialized');
 
     monthlyFilters();
     standardFilters();
     couponTabs();
-    getCouponCategories();
-    getCoupons();
-    getMonthlyCoupons();
-    redeemCouponItem();
-    console.log('coupons initialized');
+
+
+    //redeemCouponItem();
 
     registeredIAP();
     console.log('in app purchases loaded');
 
-    checkIfAlreadyLoggedIn();
-    checkFirstUse();
-    console.log('checked if logged in');
 
+    
+    //myAccount();
 
     /* ==================================
             EVENT LISTENERS
