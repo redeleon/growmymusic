@@ -42,3 +42,40 @@ div#learnmore-wrap .locked-modal{
     color: #fff;
     font-size: 15px;
 }
+
+.mm-noprofile p {
+    font-size: 16px;
+    line-height: normal;
+    font-weight: bold;
+}
+.mm-noprofile button {
+    display: block;
+    width: 100%;
+    padding: 15px 10px;
+    border-radius: 50px;
+    border: 0;
+    font-family: 'josefinsans_regular';
+    font-size: 17px;
+    color: #fff;
+    background: #8bc439;
+    margin-top: 25px;
+}
+.mm-noprofile {
+    padding: 20px 0;
+    font-family: 'josefinsans_regular';
+    text-align: center;
+    display:none;
+}
+
+div#mail-modal.noprofile .mm-profile {
+    display: block;
+}
+div#mail-modal.hasprofile .mm-noprofile {
+    display: none;
+}
+div#mail-modal.hasprofile .mail-modal-buttons {
+    display: block;
+}
+div#mail-modal.noprofile .mail-modal-buttons {
+    display: none;
+}
