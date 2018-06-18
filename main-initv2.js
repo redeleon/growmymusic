@@ -187,12 +187,15 @@ function initApp() {
     function saveProfile() {
         
         $('#profile-builder').fadeOut();
-
-        var lpi = localStorage.profileimg;
-        if ( lpi.indexOf('growmymusic.com') > -1 ) {
-            logProfileDetails();
+        var lpi;
+        if(typeof(localStorage.profileimg != undefined)){
+            lpi = localStorage.profileimg;
+            if ( lpi.indexOf('growmymusic.com') > -1 ) {
+                logProfileDetails();
+            }
         } else {
-            var x = 'data:image/jpeg;base64,' + localStorage.profileimg;
+            var imageData = $('#image-data').val();
+            var x = 'data:image/jpeg;base64,' + imageData;
             var y = dataURItoBlob(x);
 
             var randomnum = generateSerial();
@@ -2873,6 +2876,10 @@ function initApp() {
         
 
         
+    }
+
+    function mailModalSetProfile(){
+
     }
 
     function setMailModal(content, header, subheader, type) {
