@@ -3097,7 +3097,7 @@ function initApp() {
                 for (var i = 0; i < context.length; i++) {
                     switch (context[i].gsx$name.$t) {
                         
-                        case "Spotify":
+                        case "Streaming Services":
                             $('.members-calendar-tiles[data-type="spotify"]').attr('data-msg', context[i].gsx$message.$t);
                             if (context[i].gsx$status.$t === "A") {
                                 $('.members-calendar-tiles[data-type="spotify"] .tile-wrap').removeClass('locked').addClass('active');
@@ -3108,7 +3108,7 @@ function initApp() {
                                  $('.members-calendar-tiles[data-type="spotify"]').addClass('submitted');
                             }
                             break;
-                        case "BMG":
+                        case "Record Labels / Publishers":
                             $('.members-calendar-tiles[data-type="bmg"]').attr('data-msg', context[i].gsx$message.$t);
                             if (context[i].gsx$status.$t === "A") {
                                 $('.members-calendar-tiles[data-type="bmg"] .tile-wrap').removeClass('locked').addClass('active');
