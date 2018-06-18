@@ -2889,10 +2889,6 @@ function initApp() {
         
     }
 
-    function mailModalSetProfile(){
-
-    }
-
     function setMailModal(content, header, subheader, type) {
         $('#mail-modal textarea#mail-msg').val(content);
         $('#mail-modal .mail-header p.mh-h').text(header);
@@ -2902,6 +2898,23 @@ function initApp() {
         $('.error-validation').each(function() {
             $(this).hide();
         });
+        
+        if ( $('.mm-noprofile').length < 1 ){
+            $('#mail-modal > div').append('<div class="mm-noprofile"><p>You haven’t competed and saved your artist profile yet. Please complete now so you can submit.</p><button type="button" id="mm-profile">Complete your profile details</button></div>');
+        }
+        
+        if ( typeof(localStorage.profile) != "undefined"){
+            $('#mail-modal').addClass('hasprofile');
+            $('#mail-modal').removeClass('noprofile');
+        } else {
+            $('#mail-modal').removeClass('hasprofile');
+            $('#mail-modal').addClass('noprofile');
+        }
+
+        $('#mm-profile').click(function(){
+            $('#mail-modal').hide();
+            $('#profile-builder').fadeIn();
+        })
 
         $('#mail-modal').fadeIn(200);
     }
