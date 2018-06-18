@@ -7,6 +7,7 @@ var iapPurchased = [];
 var scriptPath = "";
 var testMode = false;
 var activeMC = 0;
+var scriptVersion = 2;
 
 function initApp() {
     var style = document.createElement('link');
@@ -760,7 +761,7 @@ function initApp() {
     function logErrors(id, error) {
         var system = getMobileOperatingSystem();
         var url = "https://script.google.com/macros/s/AKfycbyVzHfMvstCBWqxvyrkl7rTGdHHmLB1K2_7wI95OJNoyDL-NOg/exec"
-        var parseUrl = url + "?Id=" + id + "&Error=" + error + "&Os=" + system;
+        var parseUrl = url + "?Id=" + id + "&Error=" + error + "&Os=" + system + "&ScriptVersion="+scriptVersion;
         var jqxhr = $.ajax({
             url: parseUrl,
             method: "GET",
