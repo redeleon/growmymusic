@@ -1335,9 +1335,11 @@ function initApp() {
         if (typeof(localStorage.profile) != "undefined") {
             console.log('profile in local');
             setProfile();
+            initProfileBtns();
         } else {
             console.log('pulling profile from db');
             getProfile();
+            initProfileBtns();
         }
 
         $('#artist-profile-btn').click(function() {
