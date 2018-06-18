@@ -675,7 +675,7 @@ function initApp() {
                 $('#ads ul').empty();
                 if (context.length > 0) {
                     for (var i = 0; i < context.length; i++) {
-                        $('#ads ul').append('<li><a data-url="'+context[i].gsx$link.$t+'" class="epage"><img src="'+context[i].gsx$bannerimageurl.$t+'"></a></li>')
+                        $('#ads ul').append('<li><a data-url="'+context[i].gsx$link.$t+'" data-adnumber="'+context[i].gsx$adnumber.$t+'" class="epage"><img src="'+context[i].gsx$bannerimageurl.$t+'"></a></li>')
                     }
                     $('#ads').show();
                     $('#ads ul').slick({
@@ -688,8 +688,10 @@ function initApp() {
                     });
                     $('#ads .epage').each(function() {
                         $(this).click(function(e) {
+                            showLoader("Loading ad");
                             var url = $(this).attr('data-url');
-                            browser(url);
+                            var adnumber = $(this).attr('data-adnumber');
+                            logAdClicks(adnumber,url);
                         });
                     });
                 }
@@ -700,6 +702,19 @@ function initApp() {
             }
         });
     }
+
+    function logAdClicks(adnumber,url){
+        var url = "https://script.google.com/macros/s/AKfycbz6ySlCIxnyHgzpZXYVtXcPfzM4c_lZtVm-ErzQ7hOewUOzF0Q/exec";
+        var jqxhr = $.ajax({
+            url: url+"?adnumber="+adnumber+"&url="+url,
+            method: "GET",
+            dataType: "json",
+        }).success(function(result) {
+            $('.loader').hide();
+            browser(url);
+        });
+    }
+
 
     function registeredIAP() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/7/public/values?alt=json', function(data, xhr) {
