@@ -67,15 +67,16 @@ div#learnmore-wrap .locked-modal{
     display:none;
 }
 
-div#mail-modal.noprofile .mm-profile {
-    display: block;
+div#mail-modal.noprofile .mm-noprofile {
+    display: block !important;
 }
 div#mail-modal.hasprofile .mm-noprofile {
-    display: none;
+    display: none !important;
 }
+
 div#mail-modal.hasprofile .mail-modal-buttons {
-    display: block;
+    display: block !important;
 }
 div#mail-modal.noprofile .mail-modal-buttons {
-    display: none;
+    display: none !important;
 }
