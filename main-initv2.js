@@ -11,7 +11,7 @@ var activeMC = 0;
 function initApp() {
     var style = document.createElement('link');
     style.rel = 'stylesheet';
-    style.href = 'https://cdn.rawgit.com/redeleon/growmymusic/master/gmm-overridesv2.css';
+    style.href = 'https://rawgit.com/redeleon/growmymusic/master/gmm-overridesv2.css';
     document.body.appendChild(style);
     $('.coupon-tab[data-loc="mb-dc-items"] p').text("One Time")
 
