@@ -188,7 +188,7 @@ function initApp() {
         
         $('#profile-builder').fadeOut();
         var lpi;
-        if(typeof(localStorage.profileimg != undefined)){
+        if(typeof(localStorage.profileimg != "undefined")){
             lpi = localStorage.profileimg;
             if ( lpi.indexOf('growmymusic.com') > -1 ) {
                 logProfileDetails();
