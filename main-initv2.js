@@ -4117,7 +4117,7 @@ function initApp() {
                                 $('#writing-holidays-video-mp4').attr('src', '');
 
                                 var header = "We service to Spotify twice a year.";
-                                var subheader = "please don't forget to include the link to your music on the message field below";
+                                var subheader = "please don't forget to include the link to your music on your artist profile";
                                 var content = "Please submit this single to pitch to Spotify  \n\n" +
                                     "[paste link to single here]";
 
