@@ -703,7 +703,7 @@ function initApp() {
         });
     }
 
-    function logAdClicks(adnumber,url){
+    function logAdClicks(adnumber,browseurl){
         var url = "https://script.google.com/macros/s/AKfycbz6ySlCIxnyHgzpZXYVtXcPfzM4c_lZtVm-ErzQ7hOewUOzF0Q/exec";
         var jqxhr = $.ajax({
             url: url+"?adnumber="+adnumber+"&url="+url,
@@ -711,7 +711,7 @@ function initApp() {
             dataType: "json",
         }).success(function(result) {
             $('.loader').hide();
-            browser(url);
+            browser(browseurl);
         });
     }
 
@@ -806,21 +806,26 @@ function initApp() {
                 var umList = localStorage.usermembershipids.split(",");
                 if ($.inArray("778", umList) > -1) {
                     unlockVam();
+                    endTrial();
                 }
                 if ($.inArray("777", umList) > -1) {
                     unlockVam();
+                    endTrial();
                 }
                 if ($.inArray("945", umList) > -1) {
                     unlockVam();
+                    endTrial();
                 }
                 if ($.inArray("775", umList) > -1) {
                     unlockDm();
                 }
                 if ($.inArray("214", umList) > -1) {
                     unlockCourses();
+                    endTrial();
                 }
                 if ($.inArray("278", umList) > -1) {
                     unlockCourses();
+                    endTrial();
                 }
             }
 
@@ -1005,21 +1010,26 @@ function initApp() {
 
                 if ($.inArray("778", membershipIds) > -1) {
                     unlockVam();
+                    endTrial();
                 }
                 if ($.inArray("777", membershipIds) > -1) {
                     unlockVam();
+                    endTrial();
                 }
                 if ($.inArray("945", membershipIds) > -1) {
                     unlockVam();
+                    endTrial();
                 }
                 if ($.inArray("775", membershipIds) > -1) {
                     unlockDm();
                 }
                 if ($.inArray("214", membershipIds) > -1) {
                     unlockCourses();
+                    endTrial();
                 }
                 if ($.inArray("278", membershipIds) > -1) {
                     unlockCourses();
+                    endTrial();
                 }
 
                 $('.loader').fadeOut(200);
@@ -1065,6 +1075,11 @@ function initApp() {
         });
     }
 
+    function endTrial(){
+        $('#trial').hide();
+        $('body').removeClass('trial-period');
+    }
+
     function checkSubscription(id, mode) {
         if (typeof(localStorage.activeMemberships) == "undefined") {
             getSubscriptions(id, mode);
@@ -1076,21 +1091,26 @@ function initApp() {
 
             if ($.inArray("778", memberships) > -1) {
                 unlockVam();
+                endTrial();
             }
             if ($.inArray("777", memberships) > -1) {
                 unlockVam();
+                endTrial();
             }
             if ($.inArray("945", memberships) > -1) {
                 unlockVam();
+                endTrial();
             }
             if ($.inArray("775", memberships) > -1) {
                 unlockDm();
             }
             if ($.inArray("214", memberships) > -1) {
                 unlockCourses();
+                endTrial();
             }
             if ($.inArray("278", memberships) > -1) {
                 unlockCourses();
+                endTrial();
             }
 
 
@@ -1102,12 +1122,14 @@ function initApp() {
                         case "com.growmymusic.vammonthly":
                             console.log('Virtual Artist Manager');
                             unlockVam();
+                            endTrial();
                             break;
                         case "com.growmymusic.digitalmarketing":
                             unlockDm();
                             break;
                         case "com.growmymusic.onlinecourse2dayseminar":
                             unlockCourses();
+                            endTrial();
                             break;
                     }
                 }
@@ -3157,6 +3179,17 @@ function initApp() {
                                  $('.members-calendar-tiles[data-type="booking-agent"]').addClass('submitted');
                             }
                             break;
+                        case "2 Day Seminar":
+                            $('.members-calendar-tiles[data-type="2day-seminar"]').attr('data-msg', context[i].gsx$message.$t);
+                            if (context[i].gsx$status.$t === "A") {
+                                $('.members-calendar-tiles[data-type="2day-seminar"] .tile-wrap').removeClass('locked').addClass('active');
+                            } else {
+                                $('.members-calendar-tiles[data-type="2day-seminar"] .tile-wrap').addClass('locked').removeClass('active');
+                            }
+                            if ( typeof(localStorage.submitted2dayseminar) != "undefined"){
+                                 $('.members-calendar-tiles[data-type="2day-seminar"]').addClass('submitted');
+                            }
+                            break;
                     }
                 }
                 callback();
@@ -4320,60 +4353,64 @@ function initApp() {
                             
                             break;
                         case '2day-seminar':
+                            if ( typeof(localStorage.submittedbookingagent) == "undefined" ){
+                                $('#writing-holidays-video').hide();
+                                $('#writing-holidays-video-mp4').attr('src', '');
 
-                            $('#writing-holidays-video').hide();
-                            $('#writing-holidays-video-mp4').attr('src', '');
+                                var header = "Enrol for the 2-Day Seminar 2018 NOW!";
+                                var subheader = "";
 
-                            var header = "Enrol for the 2-Day Seminar 2018 NOW!";
-                            var subheader = "";
+                                var content = "I’d like to express my interest for this year’s Seminar. \n\n" +
+                                    "Full Name: \n" +
+                                    "Email address: \n" +
+                                    "Phone number: \n" +
+                                    "State: \n\n";
 
-                            var content = "I’d like to express my interest for this year’s Seminar. \n\n" +
-                                "Full Name: \n" +
-                                "Email address: \n" +
-                                "Phone number: \n" +
-                                "State: \n\n";
+                                setMailModal(content, header, subheader, type);
+                                getSeminarSchedule();
 
-                            setMailModal(content, header, subheader, type);
-                            getSeminarSchedule();
+                                $('#mail-modal').fadeIn(200);
 
-                            $('#mail-modal').fadeIn(200);
+                                $('#mail-modal button#mail-profile-send').click(function() {
 
-                            $('#mail-modal button#mail-profile-send').click(function() {
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "2-Day Seminar Inquiry",type);
+                                });
 
-                                sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "2-Day Seminar Inquiry",type);
-                            });
+                                $('#mail-modal button#mail-send').click(function() {
+                                    var fn = $('input#mail-fn').val();
+                                    var ln = $('input#mail-ln').val();
+                                    var em = $('input#mail-email').val();
+                                    var msg = $('textarea#mail-msg').val();
+                                    var type = $(this).attr('data-submitlink');
+                                    var subj = "2-Day Seminar Inquiry";
 
-                            $('#mail-modal button#mail-send').click(function() {
-                                var fn = $('input#mail-fn').val();
-                                var ln = $('input#mail-ln').val();
-                                var em = $('input#mail-email').val();
-                                var msg = $('textarea#mail-msg').val();
-                                var type = $(this).attr('data-submitlink');
-                                var subj = "2-Day Seminar Inquiry";
+                                    if (fn === "") {
+                                        $('input#mail-fn').prev().show();
+                                    }
+                                    if (ln === "") {
+                                        $('input#mail-ln').prev().show();
+                                    }
+                                    if (em === "") {
+                                        $('input#mail-email').prev().show();
+                                    }
+                                    if (msg === "") {
+                                        $('textarea#mail-msg').prev().show();
+                                    }
 
-                                if (fn === "") {
-                                    $('input#mail-fn').prev().show();
-                                }
-                                if (ln === "") {
-                                    $('input#mail-ln').prev().show();
-                                }
-                                if (em === "") {
-                                    $('input#mail-email').prev().show();
-                                }
-                                if (msg === "") {
-                                    $('textarea#mail-msg').prev().show();
-                                }
+                                    if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
+                                        sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
+                                    }
+                                });
 
-                                if (fn !== "" && ln !== "" && em !== "" && msg !== "") {
-                                    sendMembershipCalendarMail(fn, ln, em, subj, msg, type);
-                                }
-                            });
-
-                            $('#mail-modal .mail-header span').hide();
-                            $('#seminar-schedule').show();
-                            $('#beatstars-items').hide();
-                            $('#mail-form').hide();
-                            $('.mail-modal-buttons').show();
+                                $('#mail-modal .mail-header span').hide();
+                                $('#seminar-schedule').show();
+                                $('#beatstars-items').hide();
+                                $('#mail-form').hide();
+                                $('.mail-modal-buttons').show();
+                            } else {
+                                locked(type, "You have submitted already. We receive and review every submission, so don't worry we're across it.");
+                            }
+                            
                             break;
                     }
                 }
