@@ -1262,23 +1262,6 @@ function initApp() {
             });
     }
 
-    function sendSubscriptionEmail(email, fullname, subscription){
-
-        var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
-        var action = "subscribedviaapp";
-        var httpData = {
-            "action": action,
-            "SVAName": fullname,
-            "SVAEmail": email,
-            "SVASubscription"
-        };
-            performHttp(url, "post", httpData, function(response) {
-                console.log(response);
-            }, function(response) {
-                console.log(response.status);
-                console.log(response.error);
-            });
-    }
 
     function register(user, email, pass, fname, lname, phone) {
         var fullname = fname + " " + lname;
