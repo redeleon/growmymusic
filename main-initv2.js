@@ -118,6 +118,20 @@ function initApp() {
         unlockVam();
     }
 
+
+    function sendWPEmail(action,data){
+        var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
+        var action = action;
+        var httpData = data;
+
+            performHttp(url, "post", httpData, function(response) {
+                console.log(response);
+            }, function(response) {
+                console.log(response.status);
+                console.log(response.error);
+            });
+    }
+
     function logTrial(id) {
         showLoader("Registering Trial Account");
 
@@ -132,7 +146,8 @@ function initApp() {
                 dataType: "json",
                 data: {
                     "Id": localStorage.id,
-                    "Date": time
+                    "Date": time,
+                    "Email":localStorage.user
                 }
             }).success(function(result) {
                 $('.loader').hide();
@@ -142,6 +157,15 @@ function initApp() {
                 $('#firstuse-video-mp4').attr('src', '');
                 $('#first-use').fadeOut(200);
                 $('#success-trial').fadeIn();
+
+                var fullnamewp = localStorage.firstname + " " + localStorage.lastname;
+                var wpdata = {
+                    "action" : "logtrial",
+                    "LTName" : fullnamewp,
+                    "LTEmail" : localStorage.user
+                };
+
+                sendWPEmail('logtrial', data);
             });
         }, function() {
             $('.loader').hide();
@@ -1229,6 +1253,24 @@ function initApp() {
             "action": action,
             "RVAName": fullname,
             "RVAEmail": email
+        };
+            performHttp(url, "post", httpData, function(response) {
+                console.log(response);
+            }, function(response) {
+                console.log(response.status);
+                console.log(response.error);
+            });
+    }
+
+    function sendSubscriptionEmail(email, fullname, subscription){
+
+        var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
+        var action = "subscribedviaapp";
+        var httpData = {
+            "action": action,
+            "SVAName": fullname,
+            "SVAEmail": email,
+            "SVASubscription"
         };
             performHttp(url, "post", httpData, function(response) {
                 console.log(response);
@@ -2469,6 +2511,7 @@ function initApp() {
     }
 
     function meprCreateTransaction(id, meprprodid) {
+        var membershipid = mepreprodid;
         var credentials = btoa('bunnyfishcreatives@gmail.com:phk2D9nvc6fBkYDYa8R1LpKi');
         var settings = {
             "async": true,
@@ -2764,7 +2807,7 @@ function initApp() {
 
 
 
-                        if (parseInt(context[i].gsx$id.$t) === id) {
+                        if (parseInt(context[i].gsx$id.$t) === parseInt(id)) {
                             var identifier = context[i].gsx$identifier.$t;
                             var type = context[i].gsx$type.$t;
                             var parseType = type.toLowerCase();
@@ -2970,18 +3013,23 @@ function initApp() {
                 $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'hit-producer':
+            case 'hitproducer':
                 $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'writing-holidays':
+            case 'writingholidays':
                 $('#thankyou-wrap p').html('<p>Thank you for your submission. <br>We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'music-sync':
+            case 'musicsync':
                 $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case 'booking-agent':
+            case 'bookingagent':
                 $('#thankyou-wrap p').html('<p>Thank you for your submission. <br> We\'ll be in touch before the end of the month.</p>');
                 break;
             case '2day-seminar':
+            case '2dayseminar':
                 $('#thankyou-wrap p').html('<p>Thank you for your application.  <br> We\'ll be in touch with more information shortly. Get excited, our 2 Day Seminar blows heads off and transform careers entirely!</p>');
                 break;
         }
@@ -4149,9 +4197,9 @@ function initApp() {
                                 $('#writing-holidays-video').hide();
                                 $('#writing-holidays-video-mp4').attr('src', '');
 
-                                var header = "We service to Spotify twice a year.";
+                                var header = "We service to Streaming Services twice a year.";
                                 var subheader = "please don't forget to include the link to your music on your artist profile";
-                                var content = "Please submit this single to pitch to Spotify  \n\n" +
+                                var content = "Please submit this single to pitch to Streaming Services  \n\n" +
                                     "[paste link to single here]";
 
                                 setMailModal(content, header, subheader, type);
