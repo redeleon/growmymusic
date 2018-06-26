@@ -80,3 +80,6 @@ div#mail-modal.hasprofile .mail-modal-buttons {
 div#mail-modal.noprofile .mail-modal-buttons {
     display: none !important;
 }
+span#log-back {
+    top:45px;
+}
