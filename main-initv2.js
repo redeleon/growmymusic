@@ -298,7 +298,7 @@ function initApp() {
             qString = qString + '&' + profile[x].name + "=" + profile[x].value;
         }
 
-        var completeQuery = "?id="+localStorage.id+"&type="+type+qString;
+        var completeQuery = "?id="+localStorage.id+"&type="+type+"&submissionnumber="+localStorage.submissionnumber+qString;
         console.log(completeQuery);
 
         var data = query_to_hash(completeQuery);
@@ -493,7 +493,7 @@ function initApp() {
             "Number of Co-writers (Apple Music): " + applecowriters + "\n";
 
 
-        sendMembershipCalendarMail(fn, ln, em, subj, content,type)
+        sendMembershipCalendarMail(fn, ln, em, subj, content, type)
 
     }
 
@@ -2914,7 +2914,7 @@ function initApp() {
 
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
         var action = testMode == true ? "membershipcalendarmailtest" : "membershipcalendarmail";
-        var tileType = type.indexOf("-") > 0 ? type.replace("-","") : "";
+        var tileType = type.indexOf("-") > 0 ? type.replace("-","") : type;
         var length
         var httpData = {
             "action": action,
@@ -2936,6 +2936,7 @@ function initApp() {
 
                 $('.members-calendar-tiles[data-type="'+type+'"]').addClass('submitted');
                 localStorage.setItem("submitted"+tileType,"true");
+
                 if ( parseInt(localStorage.activemc) > 0){
                     var amc = parseInt(localStorage.activemc) - 1;
                     localStorage.setItem('activemc',amc);
@@ -3094,7 +3095,8 @@ function initApp() {
                                         var submittedItem = "submitted"+parsesubmissiontype;
                                         localStorage.setItem(submittedItem,"true");
                                         submitteditems++;
-                                        console.log('submitted items:' + submitteditems)
+                                        console.log('submitted items:' + submitteditems);
+                                        $('.members-calendar-tiles[data-type="'+submissiontype+'"]').addClass('submitted');
                                     }
                                 }
                              }
@@ -4189,7 +4191,7 @@ function initApp() {
 
                                 $('#mail-modal button#mail-profile-send').click(function() {
 
-                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Streaming Services Submission",type);
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Streaming Services Submission", type);
                                 });
 
                                 $('#mail-modal button#mail-send').click(function() {
