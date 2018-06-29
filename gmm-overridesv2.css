@@ -83,3 +83,7 @@ div#mail-modal.noprofile .mail-modal-buttons {
 span#log-back {
     top:45px;
 }
+div.members-calendar-tiles.submitted .tile-wrap:after,
+div.members-calendar-tiles.submitted .tile-wrap.active:after {
+    display:none;
+}
