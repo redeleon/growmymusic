@@ -410,21 +410,22 @@ function initApp() {
                 $('#profile-photo-img').attr('src', localStorage.profileimg);
             }
 
+            
+            $('input[name="' + profile[x].name + '"]').val(profile[x].value);
+            $('#my-account-page p[data-artistvalue="' + profile[x].name + '"]').text(profile[x].value);
+            localStorage.setItem(profile[x].name, profile[x].value);
+
             if (profile[x].name == 'profile-bio') {
-                $('textarea[name="' + profile[x].name + '"]').val(profile[x].value);
-                $('#my-account-page p[data-artistvalue="' + profile[x].name + '"]').text(profile[x].value);
+                $('textarea[name="profile-bio"]').val(profile[x].value);
+                $('#my-account-page p[data-artistvalue="profile-bio"]').text(profile[x].value);
                 localStorage.setItem(profile[x].name, profile[x].value);
             }
 
             if (profile[x].name == 'profile-pitch') {
-                $('textarea[name="' + profile[x].name + '"]').val(profile[x].value);
-                $('#my-account-page p[data-artistvalue="profile-"]').text(profile[x].value);
+                $('textarea[name="profile-pitch"]').val(profile[x].value);
+                $('#my-account-page p[data-artistvalue="profile-pitch"]').text(profile[x].value);
                 localStorage.setItem(profile[x].name, profile[x].value);
             }
-
-            $('input[name="' + profile[x].name + '"]').val(profile[x].value);
-            $('#my-account-page p[data-artistvalue="' + profile[x].name + '"]').text(profile[x].value);
-            localStorage.setItem(profile[x].name, profile[x].value);
         }
     }
 
