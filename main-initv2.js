@@ -21,7 +21,7 @@ function initApp() {
         $('.loader .loader-message').text(text);
     }
 
-    function resetMC(){
+    function resetMC() {
         localStorage.removeItem("submittedspotify");
         localStorage.removeItem("submittedwritingholidays");
         localStorage.removeItem("submittedbookingagent");
@@ -30,8 +30,8 @@ function initApp() {
         localStorage.removeItem("activemc");
     }
 
-    function checkLocalStorageIfHasValue(storage){
-        if (typeof(storage) != "undefined"){
+    function checkLocalStorageIfHasValue(storage) {
+        if (typeof(storage) != "undefined") {
             return true;
         } else {
             return false;
@@ -119,17 +119,17 @@ function initApp() {
     }
 
 
-    function sendWPEmail(action,data){
+    function sendWPEmail(action, data) {
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
         var action = action;
         var httpData = data;
 
-            performHttp(url, "post", httpData, function(response) {
-                console.log(response);
-            }, function(response) {
-                console.log(response.status);
-                console.log(response.error);
-            });
+        performHttp(url, "post", httpData, function(response) {
+            console.log(response);
+        }, function(response) {
+            console.log(response.status);
+            console.log(response.error);
+        });
     }
 
     function logTrial(id) {
@@ -147,7 +147,7 @@ function initApp() {
                 data: {
                     "Id": localStorage.id,
                     "Date": time,
-                    "Email":localStorage.user
+                    "Email": localStorage.user
                 }
             }).success(function(result) {
                 $('.loader').hide();
@@ -160,9 +160,9 @@ function initApp() {
 
                 var fullnamewp = localStorage.firstname + " " + localStorage.lastname;
                 var wpdata = {
-                    "action" : "logtrial",
-                    "LTName" : fullnamewp,
-                    "LTEmail" : localStorage.user
+                    "action": "logtrial",
+                    "LTName": fullnamewp,
+                    "LTEmail": localStorage.user
                 };
 
                 sendWPEmail('logtrial', data);
@@ -200,30 +200,30 @@ function initApp() {
     function dataURItoBlob(dataURI) {
         var binary = atob(dataURI.split(',')[1]);
         var array = [];
-        for(var i = 0; i < binary.length; i++) {
+        for (var i = 0; i < binary.length; i++) {
             array.push(binary.charCodeAt(i));
         }
-        return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+        return new Blob([new Uint8Array(array)], { type: 'image/jpeg' });
     }
 
     query_to_hash = function(queryString) {
-      var j, q;
-      q = queryString.replace(/\?/, "").split("&");
-      j = {};
-      $.each(q, function(i, arr) {
-        arr = arr.split('=');
-        return j[arr[0]] = arr[1];
-      });
-      return j;
+        var j, q;
+        q = queryString.replace(/\?/, "").split("&");
+        j = {};
+        $.each(q, function(i, arr) {
+            arr = arr.split('=');
+            return j[arr[0]] = arr[1];
+        });
+        return j;
     }
 
     function saveProfile() {
-        
+
         $('#profile-builder').fadeOut();
         var lpi;
-        if( typeof(localStorage.profileimg) != "undefined" ){
+        if (typeof(localStorage.profileimg) != "undefined") {
             lpi = localStorage.profileimg;
-            if ( lpi.indexOf('growmymusic.com') > -1 ) {
+            if (lpi.indexOf('growmymusic.com') > -1) {
                 logProfileDetails();
             }
         } else {
@@ -232,7 +232,7 @@ function initApp() {
             var y = dataURItoBlob(x);
 
             var randomnum = generateSerial();
-            var randomjpg = randomnum+".jpg";
+            var randomjpg = randomnum + ".jpg";
             showLoader("uploading image");
 
             var form = new FormData();
@@ -240,53 +240,64 @@ function initApp() {
             form.append("action", "imagesave");
 
             var settings = {
-              "async": true,
-              "crossDomain": true,
-              "url": "https://growmymusic.com/wp-admin/admin-ajax.php",
-              "method": "POST",
-              "headers": {
-                "authorization": "Basic YnVubnlmaXNoY3JlYXRpdmVzOmJTRm5uQmVWb2IwU3A0Um9kUkhPeVFZYw==",
-                "cache-control": "no-cache"
-              },
-              "processData": false,
-              "contentType": false,
-              "mimeType": "multipart/form-data",
-              "data": form
+                "async": true,
+                "crossDomain": true,
+                "url": "https://growmymusic.com/wp-admin/admin-ajax.php",
+                "method": "POST",
+                "headers": {
+                    "authorization": "Basic YnVubnlmaXNoY3JlYXRpdmVzOmJTRm5uQmVWb2IwU3A0Um9kUkhPeVFZYw==",
+                    "cache-control": "no-cache"
+                },
+                "processData": false,
+                "contentType": false,
+                "mimeType": "multipart/form-data",
+                "data": form
             }
 
-            $.ajax(settings).done(function (response) {
-              console.log(response);
-              var jsonresponse = JSON.parse(response);
-              localStorage.setItem('profileimg',jsonresponse.url);
-              $('input#image-data').val(jsonresponse.url);
-              $('.loader').hide();
-              logProfileDetails();
+            $.ajax(settings).done(function(response) {
+                console.log(response);
+                var jsonresponse = JSON.parse(response);
+                localStorage.setItem('profileimg', jsonresponse.url);
+                $('input#image-data').val(jsonresponse.url);
+                $('.loader').hide();
+                logProfileDetails();
+            }).fail(function(response) {
+                var errorResponse = JSON.stringify(response);
+                var id = localStorage.id;
+                logErrors(id, errorResponse);
+                errorHandler("error uploading profile image to server, please try again later.");
             });
         }
 
-        
+
 
     }
 
-    function logProfileDetails(){
+    function logProfileDetails() {
         $('#image-data').removeAttr('disabled');
         var id = localStorage.id;
         var email = localStorage.user;
         var serializedForm = $('form#profile-form').serializeArray();
         var stringifiedForm = JSON.stringify(serializedForm);
-        localStorage.setItem('profile',stringifiedForm);
+        localStorage.setItem('profile', stringifiedForm);
 
         setProfile();
-        showLoader('syncing profile data to database');
+        showLoader('profile saved. syncing profile data to server');
 
         var url = "https://script.google.com/macros/s/AKfycbxpQpj3Y9kYo98EfgDz9iDuqTxurRol-gNfwmnGktutsAGkreWP/exec";
         var jqxhr = $.ajax({
-            url: url+"?Id="+id+"&Data="+stringifiedForm,
+            url: url + "?Id=" + id + "&Data=" + stringifiedForm,
             method: "GET",
             dataType: "json",
         }).success(function(result) {
             $('.loader').hide();
-        });
+            errorHandler("profile saved to server");
+        }).fail(function(response) {
+            var errorResponse = JSON.stringify(response);
+            var id = localStorage.id;
+            logErrors(id, errorResponse);
+            errorHandler("error saving profile to server, please try again later.");
+        });;
 
     }
 
@@ -294,11 +305,11 @@ function initApp() {
         var profile = JSON.parse(localStorage.profile);
         var qString = "";
 
-        for(x=0;x<profile.length;x++){
+        for (x = 0; x < profile.length; x++) {
             qString = qString + '&' + profile[x].name + "=" + profile[x].value;
         }
 
-        var completeQuery = "?id="+localStorage.id+"&type="+type+"&submissionnumber="+localStorage.submissionnumber+qString;
+        var completeQuery = "?id=" + localStorage.id + "&type=" + type + "&submissionnumber=" + localStorage.submissionnumber + qString;
         console.log(completeQuery);
 
         var data = query_to_hash(completeQuery);
@@ -312,6 +323,7 @@ function initApp() {
             data: data
         }).success(function(result) {
             $('.loader').hide();
+            errorHandler("submission successfully saved to server, thank you for your submission");
         });
     }
 
@@ -322,19 +334,19 @@ function initApp() {
             if (xhr == 200 || xhr == "success") {
                 var entries = data.feed.entry;
                 console.log(entries);
-                if(entries != undefined) {
-                   if (entries.length > 0) {
+                if (entries != undefined) {
+                    if (entries.length > 0) {
                         for (var i = 0; i < entries.length; i++) {
                             var entry = entries[i];
                             var dbId = parseInt(entry.gsx$id.$t);
                             var localId = parseInt(localStorage.id);
-                            if ( dbId == localId ) {
+                            if (dbId == localId) {
                                 localStorage.setItem("hasprofile", "true");
                                 localStorage.setItem("profile", entry.gsx$data.$t);
                                 setProfile();
                             }
                         }
-                    } 
+                    }
                 }
                 $('.loader').fadeOut(200);
             } else {
@@ -347,30 +359,30 @@ function initApp() {
     function setProfile() {
         var profile = JSON.parse(localStorage.profile);
 
-        if (typeof(localStorage.profileimg) != "undefined"){
+        if (typeof(localStorage.profileimg) != "undefined") {
             $('input#image-data').val(localStorage.profileimg);
             $('#ma-pimg').attr('src', localStorage.profileimg);
-            $('#my-profile img[data-details="profile-image"]').attr('src',localStorage.profileimg);
+            $('#my-profile img[data-details="profile-image"]').attr('src', localStorage.profileimg);
             $('#profile-photo-img').attr('src', localStorage.profileimg);
         }
-        
+
 
         for (x = 0; x < profile.length; x++) {
             if (profile[x].name == 'profile-image') {
-                localStorage.setItem('profileimg',profile[x].value);
+                localStorage.setItem('profileimg', profile[x].value);
                 $('input#image-data').val(localStorage.profileimg);
                 $('#ma-pimg').attr('src', localStorage.profileimg);
-                $('#my-profile img[data-details="profile-image"]').attr('src',localStorage.profileimg);
+                $('#my-profile img[data-details="profile-image"]').attr('src', localStorage.profileimg);
                 $('#profile-photo-img').attr('src', localStorage.profileimg);
             }
 
             $('input[name="' + profile[x].name + '"]').val(profile[x].value);
-            $('#my-account-page p[data-artistvalue="'+profile[x].name+'"]').text(profile[x].value);
+            $('#my-account-page p[data-artistvalue="' + profile[x].name + '"]').text(profile[x].value);
             localStorage.setItem(profile[x].name, profile[x].value);
         }
     }
 
-    function sendProfileDetails(fn, ln, em, subj,type) {
+    function sendProfileDetails(fn, ln, em, subj, type) {
         var profile = JSON.parse(localStorage.profile);
         var image,
             name,
@@ -426,19 +438,19 @@ function initApp() {
                     phone = profile[x].value;
                     break;
                 case "profile-facebok":
-                    facebok = "http://www.facebook.com/"+profile[x].value;
+                    facebok = "http://www.facebook.com/" + profile[x].value;
                     break;
                 case "profile-twitter":
-                    twitter = "http://www.twitter.com/"+profile[x].value;
+                    twitter = "http://www.twitter.com/" + profile[x].value;
                     break;
                 case "profile-instagram":
-                    instagram = "http://www.instagram.com/"+profile[x].value;
+                    instagram = "http://www.instagram.com/" + profile[x].value;
                     break;
                 case "profile-youtube":
-                    youtube = "http://www.youtube.com/"+profile[x].value;
+                    youtube = "http://www.youtube.com/" + profile[x].value;
                     break;
                 case "profile-soundcloud":
-                    soundcloud = "http://www.soundcloud.com/"+profile[x].value;
+                    soundcloud = "http://www.soundcloud.com/" + profile[x].value;
                     break;
                 case "profile-mp3":
                     mp3 = profile[x].value;
@@ -687,7 +699,7 @@ function initApp() {
         //window.location.reload();
     }
 
-    function getAds(){
+    function getAds() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/13/public/values?alt=json', function(data, xhr) {
             console.log("registered iap");
             console.log('gdoc : ' + xhr);
@@ -699,27 +711,27 @@ function initApp() {
                 $('#ads ul').empty();
                 if (context.length > 0) {
                     for (var i = 0; i < context.length; i++) {
-                        $('#ads ul').append('<li><a data-url="'+context[i].gsx$link.$t+'" data-adnumber="'+context[i].gsx$adnumber.$t+'" class="epage"><img src="'+context[i].gsx$bannerimageurl.$t+'"></a></li>')
+                        $('#ads ul').append('<li><a data-url="' + context[i].gsx$link.$t + '" data-adnumber="' + context[i].gsx$adnumber.$t + '" class="epage"><img src="' + context[i].gsx$bannerimageurl.$t + '"></a></li>')
                     }
                     $('#ads').show();
                     $('#ads ul').slick({
-                            arrows: false,
-                            dots: false,
-                            infinite: true,
-                            autoplay: true,
-                            speed: 1000,
-                            autoplaySpeed: 10000
+                        arrows: false,
+                        dots: false,
+                        infinite: true,
+                        autoplay: true,
+                        speed: 1000,
+                        autoplaySpeed: 10000
                     });
                     $('#ads .epage').each(function() {
                         $(this).click(function(e) {
                             showLoader("Loading ad");
                             var url = $(this).attr('data-url');
                             var adnumber = $(this).attr('data-adnumber');
-                            logAdClicks(adnumber,url);
+                            logAdClicks(adnumber, url);
                         });
                     });
                 }
-                
+
             } else {
                 $('.loader').fadeOut(200);
                 errorHandler("An error has occured while trying to access in app purchases database.");
@@ -727,10 +739,10 @@ function initApp() {
         });
     }
 
-    function logAdClicks(adnumber,browseurl){
+    function logAdClicks(adnumber, browseurl) {
         var url = "https://script.google.com/macros/s/AKfycbz6ySlCIxnyHgzpZXYVtXcPfzM4c_lZtVm-ErzQ7hOewUOzF0Q/exec";
         var jqxhr = $.ajax({
-            url: url+"?adnumber="+adnumber+"&url="+url,
+            url: url + "?adnumber=" + adnumber + "&url=" + url,
             method: "GET",
             dataType: "json",
         }).success(function(result) {
@@ -799,8 +811,9 @@ function initApp() {
 
     function logErrors(id, error) {
         var system = getMobileOperatingSystem();
+        var email = localStorage.user;
         var url = "https://script.google.com/macros/s/AKfycbyVzHfMvstCBWqxvyrkl7rTGdHHmLB1K2_7wI95OJNoyDL-NOg/exec"
-        var parseUrl = url + "?Id=" + id + "&Error=" + error + "&Os=" + system + "&ScriptVersion="+scriptVersion;
+        var parseUrl = url + "?Id=" + id + "&Error=" + error + "&Os=" + system + "&email=" + email + "&ScriptVersion=" + scriptVersion;
         var jqxhr = $.ajax({
             url: parseUrl,
             method: "GET",
@@ -815,7 +828,7 @@ function initApp() {
             $('.main-content-container').show();
 
             showLoader("Welcome back " + localStorage.firstname + "!");
-            
+
             $('.first-page').fadeOut(500);
             $('.login-page').fadeOut(500);
             setTimeout(function() {
@@ -967,15 +980,15 @@ function initApp() {
                 partnersList();
                 var resString = JSON.stringify(data);
                 logErrors(user, "Log in successful! email:" + localStorage.user + " id:" + localStorage.id + "___data:" + resString);
-                
+
                 checkTrial(localStorage.id);
                 getProfile();
                 getSubmittedMC();
 
-                if (typeof(localStorage.slide) == "undefined"){
+                if (typeof(localStorage.slide) == "undefined") {
                     showSlider();
                 }
-                
+
             } else {
                 $('.loader').fadeOut(200);
                 errorHandler("An error has occured while trying to log in, please check your details and try again. ( " + responseData.error + " )");
@@ -1099,7 +1112,7 @@ function initApp() {
         });
     }
 
-    function endTrial(){
+    function endTrial() {
         $('#trial').hide();
         $('body').removeClass('trial-period');
     }
@@ -1234,10 +1247,10 @@ function initApp() {
         });
     }
 
-    function setRegisteredUser(email){
+    function setRegisteredUser(email) {
         var url = "https://script.google.com/macros/s/AKfycbzbotp9MT49gl1UuEYt9UnN0jFZmXOOOmKF2j83MYlOk7xYtxmw/exec";
         var jqxhr = $.ajax({
-            url: url+"?Email="+email,
+            url: url + "?Email=" + email,
             method: "GET",
             dataType: "json",
         }).success(function(result) {
@@ -1245,7 +1258,7 @@ function initApp() {
         });
     }
 
-    function sendRegisterEmail(email, fullname){
+    function sendRegisterEmail(email, fullname) {
 
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
         var action = "registerviaapp";
@@ -1254,12 +1267,12 @@ function initApp() {
             "RVAName": fullname,
             "RVAEmail": email
         };
-            performHttp(url, "post", httpData, function(response) {
-                console.log(response);
-            }, function(response) {
-                console.log(response.status);
-                console.log(response.error);
-            });
+        performHttp(url, "post", httpData, function(response) {
+            console.log(response);
+        }, function(response) {
+            console.log(response.status);
+            console.log(response.error);
+        });
     }
 
 
@@ -1314,7 +1327,7 @@ function initApp() {
                             var data = JSON.parse(response.data);
                             if (data.status == 'ok') {
                                 setRegisteredUser(email);
-                                sendRegisterEmail(email,fullname)
+                                sendRegisterEmail(email, fullname)
                                 setTimeout(function() {
                                     login(email, pass);
                                 }, 1000);
@@ -1406,7 +1419,7 @@ function initApp() {
         }
 
         initLogout();
-        
+
         if (typeof(localStorage.profile) != "undefined") {
             console.log('profile in local');
             setProfile();
@@ -2318,155 +2331,155 @@ function initApp() {
     }
 
     function inAppPurchases(productArray) {
-        if (testMode == true){
+        if (testMode == true) {
 
         } else {
             inAppPurchase.getProducts(productArray).then(function(products) {
-            console.log(products);
+                console.log(products);
 
-            $('body').addClass('has-iap');
+                $('body').addClass('has-iap');
 
-            var source = $("#iap-template").html();
-            var template = Handlebars.compile(source);
-            var context = products;
-            var totalProducts = products.length;
-            var renderedHtml = "";
+                var source = $("#iap-template").html();
+                var template = Handlebars.compile(source);
+                var context = products;
+                var totalProducts = products.length;
+                var renderedHtml = "";
 
-            /*===============================
-                0 {
-                  description:string,
-                  price:string,
-                  productId:string,
-                  title:string,
-                },
-            ================================*/
-            var html = '';
+                /*===============================
+                    0 {
+                      description:string,
+                      price:string,
+                      productId:string,
+                      title:string,
+                    },
+                ================================*/
+                var html = '';
 
-            for (var i = 0; i < context.length; i++) {
+                for (var i = 0; i < context.length; i++) {
 
-                var item = context[i];
+                    var item = context[i];
 
-                switch (item.productId) {
-                    case "com.growmymusic.digitalmarketing":
-                        item.meprid = "775";
-                        item.id = "dm";
-                        item.type = "onetime";
-                        item.descriptions = [{
-                            desc: "Most musicians create their music then distribute and then finally, see how well it does (or doesn’t do). Smarter business people reverse that order; numbers first, then distribution and then once they have those two key areas mapped out, they will design the product (the music/tour/merch etc etc)."
-                        }, {
-                            desc: "This is why good products and music go undiscovered every day. Whether you’re offering a product or service the rules are the same. First, work out what your product is going to cost and what you want it to earn you. Then work out how you’re going to distribute and market it before launching or even building your product!"
-                        }, {
-                            desc: "You will learn from experts who have grown companies to as large as 60,000 customers in under 3 years."
-                        }, {
-                            desc: "A certificate of enrolment will be provided to you upon course registration."
-                        }];
-                        item.benefits = [{
-                            benefit: "Gain access to Grow My Music's Digital Marketing Course.",
-                        }, {
-                            benefit: "Lifetime Access",
-                        }];
-                        item.title = 'Essential Facebook, Instagram, and Twitter Marketing 2-Hour Online Course';
-                        break;
+                    switch (item.productId) {
+                        case "com.growmymusic.digitalmarketing":
+                            item.meprid = "775";
+                            item.id = "dm";
+                            item.type = "onetime";
+                            item.descriptions = [{
+                                desc: "Most musicians create their music then distribute and then finally, see how well it does (or doesn’t do). Smarter business people reverse that order; numbers first, then distribution and then once they have those two key areas mapped out, they will design the product (the music/tour/merch etc etc)."
+                            }, {
+                                desc: "This is why good products and music go undiscovered every day. Whether you’re offering a product or service the rules are the same. First, work out what your product is going to cost and what you want it to earn you. Then work out how you’re going to distribute and market it before launching or even building your product!"
+                            }, {
+                                desc: "You will learn from experts who have grown companies to as large as 60,000 customers in under 3 years."
+                            }, {
+                                desc: "A certificate of enrolment will be provided to you upon course registration."
+                            }];
+                            item.benefits = [{
+                                benefit: "Gain access to Grow My Music's Digital Marketing Course.",
+                            }, {
+                                benefit: "Lifetime Access",
+                            }];
+                            item.title = 'Essential Facebook, Instagram, and Twitter Marketing 2-Hour Online Course';
+                            break;
 
-                    case "com.growmymusic.onetimememberregistration":
-                        item.meprid = "278";
-                        item.id = "ftm";
-                        item.type = "onetime";
-                        item.descriptions = [{
-                            desc: "Want a career in music? Then learn how to play the game smarter not harder. This short course will fast track your career years, save thousands of money, be connected with incredible industry contacts, have a one on one industry consolation with an industry expert, receive over $7,000 worth of music contracts drafted by Music Arts lawyers."
-                        }, {
-                            desc: "There are no assessments, just information rich content broken down to be learned fast and easily. Jam packed full of incredible resources and short videos, each averaging 10 minutes in length each. We call this form of education ‘snacking’. Students can learn anywhere at anytime on computer or mobile."
-                        }];
-                        item.benefits = [{
-                            benefit: "Gain access to all of Grow My Music's modules, courses and resources!",
-                        }, {
-                            benefit: "Lifetime access",
-                        }];
-                        item.title = 'Full Online Course Access';
-                        break;
+                        case "com.growmymusic.onetimememberregistration":
+                            item.meprid = "278";
+                            item.id = "ftm";
+                            item.type = "onetime";
+                            item.descriptions = [{
+                                desc: "Want a career in music? Then learn how to play the game smarter not harder. This short course will fast track your career years, save thousands of money, be connected with incredible industry contacts, have a one on one industry consolation with an industry expert, receive over $7,000 worth of music contracts drafted by Music Arts lawyers."
+                            }, {
+                                desc: "There are no assessments, just information rich content broken down to be learned fast and easily. Jam packed full of incredible resources and short videos, each averaging 10 minutes in length each. We call this form of education ‘snacking’. Students can learn anywhere at anytime on computer or mobile."
+                            }];
+                            item.benefits = [{
+                                benefit: "Gain access to all of Grow My Music's modules, courses and resources!",
+                            }, {
+                                benefit: "Lifetime access",
+                            }];
+                            item.title = 'Full Online Course Access';
+                            break;
 
-                    case "com.growmymusic.onlinecourse2dayseminar":
-                        item.meprid = "214";
-                        item.id = "ftm";
-                        item.type = "onetime";
-                        item.descriptions = [{
-                            desc: "Want a career in music? Then learn how to play the game smarter not harder. This short course will fast track your career years, save thousands of money, be connected with incredible industry contacts, have a one on one industry consolation with an industry expert, receive over $7,000 worth of music contracts drafted by Music Arts lawyers."
-                        }, {
-                            desc: "There are no assessments, just information rich content broken down to be learned fast and easily. Jam packed full of incredible resources and short videos, each averaging 10 minutes in length each. We call this form of education ‘snacking’. Students can learn anywhere at anytime on computer or mobile."
-                        }];
-                        item.benefits = [{
-                            benefit: "Gain access to all of Grow My Music's modules, courses and resources!",
-                        }, {
-                            benefit: "Lifetime access",
-                        }];
-                        item.title = 'Full Online Course Access';
-                        break;
+                        case "com.growmymusic.onlinecourse2dayseminar":
+                            item.meprid = "214";
+                            item.id = "ftm";
+                            item.type = "onetime";
+                            item.descriptions = [{
+                                desc: "Want a career in music? Then learn how to play the game smarter not harder. This short course will fast track your career years, save thousands of money, be connected with incredible industry contacts, have a one on one industry consolation with an industry expert, receive over $7,000 worth of music contracts drafted by Music Arts lawyers."
+                            }, {
+                                desc: "There are no assessments, just information rich content broken down to be learned fast and easily. Jam packed full of incredible resources and short videos, each averaging 10 minutes in length each. We call this form of education ‘snacking’. Students can learn anywhere at anytime on computer or mobile."
+                            }];
+                            item.benefits = [{
+                                benefit: "Gain access to all of Grow My Music's modules, courses and resources!",
+                            }, {
+                                benefit: "Lifetime access",
+                            }];
+                            item.title = 'Full Online Course Access';
+                            break;
 
-                    case "com.growmymusic.vammonthly":
-                        item.meprid = "778";
-                        item.id = "vam-m";
-                        item.type = "subscription";
-                        item.descriptions = [{
-                            desc: "Have your music pitched to extremely notable music companies every month. We will play your songs to key decision-makers at each company and will work tirelessly to provide you and your music with incredible opportunities based off of our existing relationships and pitching arrangements."
-                        }];
-                        item.benefits = [{
-                            benefit: "Get discounts when you subscribe to any Grow My Music packages via the Grow My Music website",
-                        }, {
-                            benefit: "Monthly subscription.",
-                        }];
-                        item.title = 'Virtual Artist Manager';
-                        break;
+                        case "com.growmymusic.vammonthly":
+                            item.meprid = "778";
+                            item.id = "vam-m";
+                            item.type = "subscription";
+                            item.descriptions = [{
+                                desc: "Have your music pitched to extremely notable music companies every month. We will play your songs to key decision-makers at each company and will work tirelessly to provide you and your music with incredible opportunities based off of our existing relationships and pitching arrangements."
+                            }];
+                            item.benefits = [{
+                                benefit: "Get discounts when you subscribe to any Grow My Music packages via the Grow My Music website",
+                            }, {
+                                benefit: "Monthly subscription.",
+                            }];
+                            item.title = 'Virtual Artist Manager';
+                            break;
 
-                    case "com.growmymusic.vamweekly":
-                        item.meprid = "777";
-                        item.type = "subscription";
-                        item.id = "vam-w";
-                        break;
+                        case "com.growmymusic.vamweekly":
+                            item.meprid = "777";
+                            item.type = "subscription";
+                            item.id = "vam-w";
+                            break;
 
-                    case "com.growmymusic.vamyearly":
-                        item.meprid = "945";
-                        item.type = "subscription";
-                        item.id = "vam-m";
-                        item.benefits = [{
-                            benefit: "Get discounts when you subscribe to any Grow My Music packages via the Grow My Music website",
-                        }, {
-                            benefit: "1 year subscription.",
-                        }];
-                        item.title = 'Virtual Artist Manager';
-                        break;
+                        case "com.growmymusic.vamyearly":
+                            item.meprid = "945";
+                            item.type = "subscription";
+                            item.id = "vam-m";
+                            item.benefits = [{
+                                benefit: "Get discounts when you subscribe to any Grow My Music packages via the Grow My Music website",
+                            }, {
+                                benefit: "1 year subscription.",
+                            }];
+                            item.title = 'Virtual Artist Manager';
+                            break;
 
-                    case "com.growmymusic.digitalmarketingyearly":
-                        item.meprid = "775";
-                        item.type = "subscription";
-                        item.id = "dm";
-                        item.benefits = item.benefits = [{
-                            benefit: "Gain access to Grow My Music's Digital Marketing Course.",
-                        }, {
-                            benefit: "One",
-                        }];
-                        item.title = 'Digital Marketing Course';
-                        break;
+                        case "com.growmymusic.digitalmarketingyearly":
+                            item.meprid = "775";
+                            item.type = "subscription";
+                            item.id = "dm";
+                            item.benefits = item.benefits = [{
+                                benefit: "Gain access to Grow My Music's Digital Marketing Course.",
+                            }, {
+                                benefit: "One",
+                            }];
+                            item.title = 'Digital Marketing Course';
+                            break;
+                    }
+
+                    html = html.concat(template(context[i]));
+                    renderedHtml = html;
                 }
 
-                html = html.concat(template(context[i]));
-                renderedHtml = html;
-            }
+                $('#purchase-items').html("");
+                $('#purchase-items').append(renderedHtml);
 
-            $('#purchase-items').html("");
-            $('#purchase-items').append(renderedHtml);
+                if (os === 'ios') {
+                    $('#purchase-items a.plan[data-productid="com.growmymusic.vammonthly"]').prependTo($('#purchase-items'));
+                }
 
-            if (os === 'ios') {
-                $('#purchase-items a.plan[data-productid="com.growmymusic.vammonthly"]').prependTo($('#purchase-items'));
-            }
+                iapClick();
 
-            iapClick();
-
-        }).catch(function(err) {
-            console.log(err);
-            errorHandler("An error has occured while trying to get In App Purchases, please try again later.");
-        });
+            }).catch(function(err) {
+                console.log(err);
+                errorHandler("An error has occured while trying to get In App Purchases, please try again later.");
+            });
         }
-        
+
     }
 
     function iapClick() {
@@ -2914,7 +2927,7 @@ function initApp() {
 
         var url = "https://growmymusic.com/wp-admin/admin-ajax.php";
         var action = testMode == true ? "membershipcalendarmailtest" : "membershipcalendarmail";
-        var tileType = type.indexOf("-") > 0 ? type.replace("-","") : type;
+        var tileType = type.indexOf("-") > 0 ? type.replace("-", "") : type;
         var length
         var httpData = {
             "action": action,
@@ -2928,32 +2941,32 @@ function initApp() {
         showLoader();
 
 
-            performHttp(url, "post", httpData, function(response) {
-                console.log(response);
-                
-                mailModalSuccess(type);
-                logProfileSubmissions(subtype);
+        performHttp(url, "post", httpData, function(response) {
+            console.log(response);
 
-                $('.members-calendar-tiles[data-type="'+type+'"]').addClass('submitted');
-                localStorage.setItem("submitted"+tileType,"true");
+            mailModalSuccess(type);
+            logProfileSubmissions(subtype);
 
-                if ( parseInt(localStorage.activemc) > 0){
-                    var amc = parseInt(localStorage.activemc) - 1;
-                    localStorage.setItem('activemc',amc);
-                    $('#b-mc .length').text(localStorage.activemc);
-                } else {
-                    localStorage.setItem('activemc',"0");
-                }
-                $('.loader').fadeOut();
-            }, function(response) {
-                $('.loader').fadeOut();
-                console.log(response.status);
-                console.log(response.error);
-                errorHandler("An error has occured while trying to send your submission, please try again later");
-            });
-        
+            $('.members-calendar-tiles[data-type="' + type + '"]').addClass('submitted');
+            localStorage.setItem("submitted" + tileType, "true");
 
-        
+            if (parseInt(localStorage.activemc) > 0) {
+                var amc = parseInt(localStorage.activemc) - 1;
+                localStorage.setItem('activemc', amc);
+                $('#b-mc .length').text(localStorage.activemc);
+            } else {
+                localStorage.setItem('activemc', "0");
+            }
+            $('.loader').fadeOut();
+        }, function(response) {
+            $('.loader').fadeOut();
+            console.log(response.status);
+            console.log(response.error);
+            errorHandler("An error has occured while trying to send your submission, please try again later");
+        });
+
+
+
     }
 
     function setMailModal(content, header, subheader, type) {
@@ -2965,12 +2978,12 @@ function initApp() {
         $('.error-validation').each(function() {
             $(this).hide();
         });
-        
-        if ( $('.mm-noprofile').length < 1 ){
+
+        if ($('.mm-noprofile').length < 1) {
             $('#mail-modal > div').append('<div class="mm-noprofile"><p>You haven’t competed and saved your artist profile yet. Please complete now so you can submit.</p><button type="button" id="mm-profile">Complete your profile details</button></div>');
         }
-        
-        if ( typeof(localStorage.profile) != "undefined"){
+
+        if (typeof(localStorage.profile) != "undefined") {
             $('#mail-modal').addClass('hasprofile');
             $('#mail-modal').removeClass('noprofile');
         } else {
@@ -2978,7 +2991,7 @@ function initApp() {
             $('#mail-modal').addClass('noprofile');
         }
 
-        $('#mm-profile').click(function(){
+        $('#mm-profile').click(function() {
             $('#mail-modal').hide();
             $('#profile-builder').fadeIn();
         })
@@ -3027,19 +3040,19 @@ function initApp() {
         });
     }
 
-    function getActiveMc(){
-        console.log("active mc qty :"+localStorage.activemc);
+    function getActiveMc() {
+        console.log("active mc qty :" + localStorage.activemc);
 
-        if ( typeof(localStorage.activemc) != "undefined") {
+        if (typeof(localStorage.activemc) != "undefined") {
             var parseActiveMc = parseInt(localStorage.activemc);
             console.log('puling active mc from local');
-            if (  parseActiveMc == 0 || parseActiveMc < 0 || parseActiveMc == NaN){
+            if (parseActiveMc == 0 || parseActiveMc < 0 || parseActiveMc == NaN) {
                 $('#b-mc .length').hide();
             } else {
                 $('#b-mc .length').show();
                 $('#b-mc .length').text(localStorage.activemc);
             }
-            
+
         } else {
             $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
                 console.log("mc tiles");
@@ -3051,17 +3064,17 @@ function initApp() {
                 if (xhr == 200 || xhr == "success") {
                     var context = data.feed.entry;
                     console.log(context);
-                    
+
                     activeMC = 0;
 
                     if (context.length > 0) {
-                         for (var i = 0; i < context.length; i++) {
+                        for (var i = 0; i < context.length; i++) {
                             if (context[i].gsx$status.$t === "A") {
                                 activeMC++;
                             }
-                         }
+                        }
 
-                        localStorage.setItem('activemc',activeMC);
+                        localStorage.setItem('activemc', activeMC);
                         $('#b-mc .length').show();
                         $('#b-mc .length').text(localStorage.activemc);
                     }
@@ -3070,55 +3083,55 @@ function initApp() {
         }
     }
 
-    function getSubmittedMC(){
+    function getSubmittedMC() {
         var id = localStorage.id;
         var submitteditems = 0;
         getSubmissionNumber();
 
         $.getJSON('https://spreadsheets.google.com/feeds/list/1Xz76QH1Cq0s3gQrcpwQCJ-fHvjjz6SKOeTGL-CKBhb0/1/public/values?alt=json', function(data, xhr) {
-                console.log("mc tiles");
-                console.log('gdoc : ' + xhr);
-                console.log(data);
-                console.log('puling submitted items from db');
+            console.log("mc tiles");
+            console.log('gdoc : ' + xhr);
+            console.log(data);
+            console.log('puling submitted items from db');
 
 
-                if (xhr == 200 || xhr == "success") {
-                    var context = data.feed.entry;
-                    console.log(context);
-                    if (context != "undefined" || context != undefined){
-                        if (context.length > 0) {
-                             for (var i = 0; i < context.length; i++) {
-                                if (context[i].gsx$id.$t == id) {
-                                    if(context[i].gsx$submissionnumber.$t == localStorage.submissionnumber) {
-                                        var submissiontype = context[i].gsx$type.$t;
-                                        var parsesubmissiontype = submissiontype.replace("-","");
-                                        var submittedItem = "submitted"+parsesubmissiontype;
-                                        localStorage.setItem(submittedItem,"true");
-                                        submitteditems++;
-                                        console.log('submitted items:' + submitteditems);
-                                        $('.members-calendar-tiles[data-type="'+submissiontype+'"]').addClass('submitted');
-                                    }
+            if (xhr == 200 || xhr == "success") {
+                var context = data.feed.entry;
+                console.log(context);
+                if (context != "undefined" || context != undefined) {
+                    if (context.length > 0) {
+                        for (var i = 0; i < context.length; i++) {
+                            if (context[i].gsx$id.$t == id) {
+                                if (context[i].gsx$submissionnumber.$t == localStorage.submissionnumber) {
+                                    var submissiontype = context[i].gsx$type.$t;
+                                    var parsesubmissiontype = submissiontype.replace("-", "");
+                                    var submittedItem = "submitted" + parsesubmissiontype;
+                                    localStorage.setItem(submittedItem, "true");
+                                    submitteditems++;
+                                    console.log('submitted items:' + submitteditems);
+                                    $('.members-calendar-tiles[data-type="' + submissiontype + '"]').addClass('submitted');
                                 }
-                             }
-                        }
-                    }
-                    if(typeof(localStorage.activemc) != "undefined"){
-                        var active_mc = parseInt(localStorage.activemc) - parseInt(submitteditems);
-                        console.log("submitted items from db:"+active_mc);
-                        if ( active_mc > 0) {
-                            localStorage.setItem('activemc',active_mc);
-                            getActiveMc();
-                        } else if ( active_mc < 1 ) {
-                            localStorage.setItem('activemc',"0");
-                            getActiveMc();
+                            }
                         }
                     }
                 }
+                if (typeof(localStorage.activemc) != "undefined") {
+                    var active_mc = parseInt(localStorage.activemc) - parseInt(submitteditems);
+                    console.log("submitted items from db:" + active_mc);
+                    if (active_mc > 0) {
+                        localStorage.setItem('activemc', active_mc);
+                        getActiveMc();
+                    } else if (active_mc < 1) {
+                        localStorage.setItem('activemc', "0");
+                        getActiveMc();
+                    }
+                }
+            }
         })
 
     }
 
-    function getSubmissionNumber(){
+    function getSubmissionNumber() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
             console.log("mc tiles");
             console.log('gdoc : ' + xhr);
@@ -3129,20 +3142,20 @@ function initApp() {
                 for (var i = 0; i < context.length; i++) {
                     switch (context[i].gsx$name.$t) {
                         case "Submission Number":
-                        if (typeof(localStorage.submissionnumber) != "undefined"){
-                            if ( parseInt(localStorage.submissionnumber) != parseInt(context[i].gsx$number.$t) ){
-                                resetMC();
-                                getActiveMc();
+                            if (typeof(localStorage.submissionnumber) != "undefined") {
+                                if (parseInt(localStorage.submissionnumber) != parseInt(context[i].gsx$number.$t)) {
+                                    resetMC();
+                                    getActiveMc();
+                                }
+                            } else {
+                                localStorage.setItem("submissionnumber", context[i].gsx$number.$t);
                             }
-                        } else {
-                            localStorage.setItem("submissionnumber",context[i].gsx$number.$t);
-                        }
                     }
                 }
             }
         })
     }
-    
+
     function membershipCalendarTiles(callback) {
         $.getJSON('https://spreadsheets.google.com/feeds/list/1wIAhsFwuIHNld3zE42elcE3EDSQLF3icLrJBDMswFiY/8/public/values?alt=json', function(data, xhr) {
             console.log("mc tiles");
@@ -3154,7 +3167,7 @@ function initApp() {
                 console.log(context);
                 for (var i = 0; i < context.length; i++) {
                     switch (context[i].gsx$name.$t) {
-                        
+
                         case "Streaming Services":
                         case "Spotify":
                             $('.members-calendar-tiles[data-type="spotify"]').attr('data-msg', context[i].gsx$message.$t);
@@ -3163,8 +3176,8 @@ function initApp() {
                             } else {
                                 $('.members-calendar-tiles[data-type="spotify"] .tile-wrap').addClass('locked').removeClass('active');
                             }
-                            if ( typeof(localStorage.submittedspotify) != "undefined"){
-                                 $('.members-calendar-tiles[data-type="spotify"]').addClass('submitted');
+                            if (typeof(localStorage.submittedspotify) != "undefined") {
+                                $('.members-calendar-tiles[data-type="spotify"]').addClass('submitted');
                             }
                             break;
                         case "Record Labels / Publishers":
@@ -3175,8 +3188,8 @@ function initApp() {
                             } else {
                                 $('.members-calendar-tiles[data-type="bmg"] .tile-wrap').addClass('locked').removeClass('active');
                             }
-                            if ( typeof(localStorage.submittedbmg) != "undefined"){
-                                 $('.members-calendar-tiles[data-type="bmg"]').addClass('submitted');
+                            if (typeof(localStorage.submittedbmg) != "undefined") {
+                                $('.members-calendar-tiles[data-type="bmg"]').addClass('submitted');
                             }
                             break;
                         case "Writing Holidays":
@@ -3186,8 +3199,8 @@ function initApp() {
                             } else {
                                 $('.members-calendar-tiles[data-type="writing-holidays"] .tile-wrap').addClass('locked').removeClass('active');
                             }
-                            if ( typeof(localStorage.submittedwritingholidays) != "undefined"){
-                                 $('.members-calendar-tiles[data-type="writing-holidays"]').addClass('submitted');
+                            if (typeof(localStorage.submittedwritingholidays) != "undefined") {
+                                $('.members-calendar-tiles[data-type="writing-holidays"]').addClass('submitted');
                             }
                             break;
                         case "Music Sync":
@@ -3197,8 +3210,8 @@ function initApp() {
                             } else {
                                 $('.members-calendar-tiles[data-type="music-sync"] .tile-wrap').addClass('locked').removeClass('active');
                             }
-                            if ( typeof(localStorage.submittedmusicsync) != "undefined"){
-                                 $('.members-calendar-tiles[data-type="music-sync"]').addClass('submitted');
+                            if (typeof(localStorage.submittedmusicsync) != "undefined") {
+                                $('.members-calendar-tiles[data-type="music-sync"]').addClass('submitted');
                             }
                             break;
                         case "Booking Agent":
@@ -3208,8 +3221,8 @@ function initApp() {
                             } else {
                                 $('.members-calendar-tiles[data-type="booking-agent"] .tile-wrap').addClass('locked').removeClass('active');
                             }
-                            if ( typeof(localStorage.submittedbookingagent) != "undefined"){
-                                 $('.members-calendar-tiles[data-type="booking-agent"]').addClass('submitted');
+                            if (typeof(localStorage.submittedbookingagent) != "undefined") {
+                                $('.members-calendar-tiles[data-type="booking-agent"]').addClass('submitted');
                             }
                             break;
                         case "2 Day Seminar":
@@ -3219,8 +3232,8 @@ function initApp() {
                             } else {
                                 $('.members-calendar-tiles[data-type="2day-seminar"] .tile-wrap').addClass('locked').removeClass('active');
                             }
-                            if ( typeof(localStorage.submitted2dayseminar) != "undefined"){
-                                 $('.members-calendar-tiles[data-type="2day-seminar"]').addClass('submitted');
+                            if (typeof(localStorage.submitted2dayseminar) != "undefined") {
+                                $('.members-calendar-tiles[data-type="2day-seminar"]').addClass('submitted');
                             }
                             break;
                     }
@@ -3654,28 +3667,28 @@ function initApp() {
         }
     }
 
-    function showSlider(){
+    function showSlider() {
         $('#t-slider').show();
 
         $('#t-slide-wrap').slick({
-                arrows: false,
-                dots: true,
-                infinite: false,
-                autoplay: false,
-                speed:200
+            arrows: false,
+            dots: true,
+            infinite: false,
+            autoplay: false,
+            speed: 200
         });
 
-        $('button#t-profile').click(function(){
+        $('button#t-profile').click(function() {
             showLoader("checking for existing profiles");
             getProfile();
             initProfileBtns();
             $('#profile-builder').fadeIn();
         });
 
-        $('button#t-close').click(function(){
+        $('button#t-close').click(function() {
             $('html, body').scrollTop(0);
             $('#t-slider').fadeOut();
-            localStorage.setItem('slide','true');
+            localStorage.setItem('slide', 'true');
         });
     }
 
@@ -3688,16 +3701,16 @@ function initApp() {
         //     $('#memberscalendar.ipage').click();
         // });
 
-        $('#bottom-nav span').each(function(){
-            $(this).click(function(){
+        $('#bottom-nav span').each(function() {
+            $(this).click(function() {
                 var target = $(this).attr('data-targetcon');
-                $('#bottom-nav span').each(function(){
+                $('#bottom-nav span').each(function() {
                     $(this).removeClass('active');
                 });
                 $(this).addClass('active');
-                $('#h-content .category-section').each(function(){
+                $('#h-content .category-section').each(function() {
                     $(this).stop().hide(300);
-                    $('.category-section[data-cat="'+target+'"]').stop().show(300);
+                    $('.category-section[data-cat="' + target + '"]').stop().show(300);
                 });
             })
         })
@@ -3708,7 +3721,7 @@ function initApp() {
                 quality: 20,
                 destinationType: Camera.DestinationType.FILE,
                 targetWidth: 600,
-                targetHeight:600,
+                targetHeight: 600,
                 correctOrientation: true
             });
         });
@@ -3721,7 +3734,7 @@ function initApp() {
                 allowEdit: true,
                 destinationType: Camera.DestinationType.DATA_URL,
                 targetWidth: 600,
-                targetHeight:600,
+                targetHeight: 600,
                 correctOrientation: true
             });
         });
@@ -3767,28 +3780,28 @@ function initApp() {
         //     backtoprevious();
         // });
 
-        function swipedRight(){
+        function swipedRight() {
             backtoprevious();
         }
 
-        $('#inner-content').swipe( {
-            swipeRight:function(event, direction, distance, duration, fingerCount) {
-              console.log("You swiped " + direction );
-              swipedRight();   
+        $('#inner-content').swipe({
+            swipeRight: function(event, direction, distance, duration, fingerCount) {
+                console.log("You swiped " + direction);
+                swipedRight();
             }
         });
 
-        $('#my-account-page').swipe( {
-            swipeRight:function(event, direction, distance, duration, fingerCount) {
-              console.log("You swiped " + direction );
-              swipedRight();   
+        $('#my-account-page').swipe({
+            swipeRight: function(event, direction, distance, duration, fingerCount) {
+                console.log("You swiped " + direction);
+                swipedRight();
             }
         });
 
-        $('.video').swipe( {
-            swipeRight:function(event, direction, distance, duration, fingerCount) {
-              console.log("You swiped " + direction );
-              swipedRight();   
+        $('.video').swipe({
+            swipeRight: function(event, direction, distance, duration, fingerCount) {
+                console.log("You swiped " + direction);
+                swipedRight();
             }
         });
 
@@ -3803,7 +3816,7 @@ function initApp() {
         // $(vidContent).hammer(hammerOptions).bind("panright", backtoprevious);
         // $(accountContent).hammer(hammerOptions).bind("panright", backtoprevious);
 
-        
+
 
         $('#success-trial').click(function(e) {
             if (e.target != this) {
@@ -4169,16 +4182,15 @@ function initApp() {
             $(this).click(function() {
                 var type = $(this).attr('data-type');
                 var isSubmitted = $(this).hasClass('submitted');
-                var dataType = type.indexOf('-') > -1 ? type.replace("-","") : type;
+                var dataType = type.indexOf('-') > -1 ? type.replace("-", "") : type;
 
                 if ($(this).find('.tile-wrap').hasClass('locked')) {
                     locked(type, $(this).attr('data-msg'));
-                } 
-                else {
+                } else {
                     switch (type) {
                         case 'spotify':
 
-                            if ( typeof(localStorage.submittedspotify) == "undefined" ) {
+                            if (typeof(localStorage.submittedspotify) == "undefined") {
                                 $('#writing-holidays-video').hide();
                                 $('#writing-holidays-video-mp4').attr('src', '');
 
@@ -4229,7 +4241,7 @@ function initApp() {
                             } else {
                                 locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
                             }
-                            
+
                             break;
                         case 'bmg':
                             var url = $(this).attr('data-url');
@@ -4250,7 +4262,7 @@ function initApp() {
                             $('.mail-modal-buttons').hide();
                             break;
                         case 'writing-holidays':
-                            if ( typeof(localStorage.submittedwritingholidays) == "undefined" ) { 
+                            if (typeof(localStorage.submittedwritingholidays) == "undefined") {
                                 $('#writing-holidays-video').show();
                                 $('#writing-holidays-video-mp4').attr('src', 'https://s3.amazonaws.com/gmmonlinecourse2017/ads/writingholiday.mp4');
                                 var vid = $('#writing-holidays-video')[0];
@@ -4277,7 +4289,7 @@ function initApp() {
 
                                 $('#mail-modal button#mail-profile-send').click(function() {
 
-                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Writing Holidays Submission",type);
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Writing Holidays Submission", type);
                                 });
 
                                 $('#mail-modal button#mail-send').click(function() {
@@ -4322,7 +4334,7 @@ function initApp() {
 
                             break;
                         case 'booking-agent':
-                            if ( typeof(localStorage.submittedbookingagent) == "undefined" ) { 
+                            if (typeof(localStorage.submittedbookingagent) == "undefined") {
                                 $('#writing-holidays-video').hide();
                                 $('#writing-holidays-video-mp4').attr('src', '');
 
@@ -4345,7 +4357,7 @@ function initApp() {
 
                                 $('#mail-modal button#mail-profile-send').click(function() {
 
-                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Booking Agent Submission",type);
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "Booking Agent Submission", type);
                                 });
 
                                 $('#mail-modal button#mail-send').click(function() {
@@ -4383,10 +4395,10 @@ function initApp() {
                                 locked(type, "You have submitted already. We receive and review every submission for pitch, so don't worry we're across it.");
                             }
 
-                            
+
                             break;
                         case '2day-seminar':
-                            if ( typeof(localStorage.submittedbookingagent) == "undefined" ){
+                            if (typeof(localStorage.submittedbookingagent) == "undefined") {
                                 $('#writing-holidays-video').hide();
                                 $('#writing-holidays-video-mp4').attr('src', '');
 
@@ -4406,7 +4418,7 @@ function initApp() {
 
                                 $('#mail-modal button#mail-profile-send').click(function() {
 
-                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "2-Day Seminar Inquiry",type);
+                                    sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "2-Day Seminar Inquiry", type);
                                 });
 
                                 $('#mail-modal button#mail-send').click(function() {
@@ -4443,7 +4455,7 @@ function initApp() {
                             } else {
                                 locked(type, "You have submitted already. We receive and review every submission, so don't worry we're across it.");
                             }
-                            
+
                             break;
                     }
                 }
@@ -4466,7 +4478,7 @@ function initApp() {
     /* ==================================
                 INIT ORDER
     ===================================*/
-    if( typeof(localStorage.id) != "undefined" ){
+    if (typeof(localStorage.id) != "undefined") {
         if (typeof(localStorage.profile) != "undefined") {
             setProfile();
             console.log('pulling profiles from local');
@@ -4477,7 +4489,7 @@ function initApp() {
             initProfileBtns();
         }
     }
-    
+
 
     getAds();
 
@@ -4516,7 +4528,7 @@ function initApp() {
     console.log('in app purchases loaded');
 
 
-    
+
     //myAccount();
 
     /* ==================================
