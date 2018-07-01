@@ -297,10 +297,10 @@ function initApp() {
         localStorage.setItem('profile', stringifiedForm);
 
         setProfile();
-        logProfileDetails(id);
+        logProfileDetails(id, stringifiedForm);
     }
 
-    function logProfileDetails(id) {
+    function logProfileDetails(id, stringifiedForm) {
         
         showLoader('profile saved. syncing profile data to server');
 
