@@ -3021,6 +3021,7 @@ function initApp() {
         $('#mail-modal .mail-header p.mh-h').text(header);
         $('#mail-modal .mail-header span').text(subheader);
         $('#mail-modal button#mail-send').attr('data-submitlink', type);
+        $('#mail-modal').attr('data-type', type);
 
         $('.error-validation').each(function() {
             $(this).hide();
