@@ -54,6 +54,13 @@ function initApp() {
     $('body').addClass(getMobileOperatingSystem());
     os = getMobileOperatingSystem();
 
+    function checkIfIphoneX(){
+        if (os == "ios" && screen.width == 1125 && screen.height === 2436) {
+            $('body').addClass("iphonex");
+        }
+    }
+    
+
     if (cordova) {
         screen.orientation.lock('portrait');
     }
@@ -731,6 +738,7 @@ function initApp() {
 
     function returnedFromPause() {
         console.log('session resumed');
+        checkIfIphoneX();
         checkIfAlreadyLoggedIn();
         getActiveMc();
         getSubmissionNumber()
@@ -1683,8 +1691,8 @@ function initApp() {
 
             $(window).scrollTop(0);
             setTimeout(function() {
-                $('.content-wrap').fadeIn(200);
-            }, 300);
+                $('.content-wrap').show();
+            }, 150);
 
 
             setTimeout(function() {
@@ -1692,13 +1700,13 @@ function initApp() {
                     $(this).hide();
                 });
                 $('#inner-content').hide();
-            }, 300);
+            }, 150);
 
             if (cordova) {
                 screen.orientation.lock('portrait');
             }
 
-            destroyBannerAds();
+            //destroyBannerAds();
         });
 
         $('#log-back').click(function() {
@@ -1707,7 +1715,7 @@ function initApp() {
             setTimeout(function() {
                 $('#log-in-form').hide();
                 $('#reg-form').hide();
-            }, 300);
+            }, 150);
 
         });
     }
@@ -1731,7 +1739,7 @@ function initApp() {
             vid.pause();
             $('.video').fadeOut(200);
             $('#mp4').attr('src', '');
-            destroyBannerAds();
+            //destroyBannerAds();
             if (cordova) {
                 screen.orientation.lock('portrait');
             }
@@ -4517,6 +4525,8 @@ function initApp() {
     /* ==================================
                 INIT ORDER
     ===================================*/
+    
+
     if (typeof(localStorage.id) != "undefined") {
         if (typeof(localStorage.profile) != "undefined") {
             setProfile();
@@ -4534,6 +4544,7 @@ function initApp() {
 
     /*initAd();*/
     setPages();
+    checkIfIphoneX();
 
     checkIfAlreadyLoggedIn();
     console.log('checked if logged in');
