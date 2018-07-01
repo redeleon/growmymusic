@@ -87,3 +87,25 @@ div.members-calendar-tiles.submitted .tile-wrap:after,
 div.members-calendar-tiles.submitted .tile-wrap.active:after {
     display:none;
 }
+
+/* IPHONE X SPECIFIC */
+body.ios.iphonex .navigation {
+    padding: 40px 10px;
+    height: 90px;
+}
+
+body.ios.iphonex .content-wrap {
+    padding-top:90px;
+}
+
+body.ios.iphonex .content-body.scrolled .content-banner {
+    top:150px;
+}
+
+body.ios.iphonex .content-body.scrolled .content-banner-text:nth-child(1).fx {
+    top:50px;
+}
+
+body.ios.iphonex .tile {
+    min-height:250px;
+}
