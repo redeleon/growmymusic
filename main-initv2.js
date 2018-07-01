@@ -297,7 +297,7 @@ function initApp() {
             url: url + "?Id=" + id + "&Data=" + stringifiedForm,
             method: "GET",
             dataType: "json",
-        }).success(function(result) {
+        }).done(function(result) {
             $('.loader').hide();
             console.log(result);
             errorHandler("profile saved to server");
@@ -337,6 +337,15 @@ function initApp() {
         }).success(function(result) {
             $('.loader').hide();
             errorHandler("submission successfully saved to server, thank you for your submission");
+            console.log('profile submission logged ' + result);
+            var errorResponse = JSON.stringify(result);
+            var id = localStorage.user;
+            logErrors(id, errorResponse);
+        }).error(function(response){
+            console.log('profile submission log error ' + response);
+            var errorResponse = JSON.stringify(response);
+            var id = localStorage.user;
+            logErrors(id, errorResponse);
         });
     }
 
