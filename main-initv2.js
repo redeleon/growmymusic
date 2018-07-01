@@ -217,17 +217,9 @@ function initApp() {
         return j;
     }
 
-    function saveProfile() {
 
-        $('#profile-builder').fadeOut();
-        var lpi;
-        if (typeof(localStorage.profileimg) != "undefined") {
-            lpi = localStorage.profileimg;
-            if (lpi.indexOf('growmymusic.com') > -1) {
-                logProfileDetails();
-            }
-        } else {
-            var imageData = $('#image-data').val();
+    function beginSaveProfile(){
+        var imageData = $('#image-data').val();
             var x = 'data:image/jpeg;base64,' + imageData;
             var y = dataURItoBlob(x);
 
@@ -260,20 +252,31 @@ function initApp() {
                 localStorage.setItem('profileimg', jsonresponse.url);
                 $('input#image-data').val(jsonresponse.url);
                 $('.loader').hide();
-                logProfileDetails();
+                saveProfileDetailsToLocal();
             }).fail(function(response) {
                 var errorResponse = JSON.stringify(response);
-                var id = localStorage.id;
+                var id = localStorage.user;
                 logErrors(id, errorResponse);
                 errorHandler("error uploading profile image to server, please try again later.");
             });
-        }
-
-
-
     }
 
-    function logProfileDetails() {
+    function saveProfile() {
+        $('#profile-builder').fadeOut();
+        var lpi;
+        if (typeof(localStorage.profileimg) != "undefined") {
+            lpi = localStorage.profileimg;
+            if (lpi.indexOf('growmymusic.com') > -1) {
+                logProfileDetails();
+            } else {
+                beginSaveProfile();
+            }
+        } else {
+            beginSaveProfile();
+        }
+    }
+
+    function saveProfileDetailsToLocal(){
         $('#image-data').removeAttr('disabled');
         var id = localStorage.id;
         var email = localStorage.user;
@@ -282,6 +285,11 @@ function initApp() {
         localStorage.setItem('profile', stringifiedForm);
 
         setProfile();
+        logProfileDetails();
+    }
+
+    function logProfileDetails() {
+        
         showLoader('profile saved. syncing profile data to server');
 
         var url = "https://script.google.com/macros/s/AKfycbxpQpj3Y9kYo98EfgDz9iDuqTxurRol-gNfwmnGktutsAGkreWP/exec";
@@ -294,7 +302,7 @@ function initApp() {
             errorHandler("profile saved to server");
         }).fail(function(response) {
             var errorResponse = JSON.stringify(response);
-            var id = localStorage.id;
+            var id = localStorage.user;
             logErrors(id, errorResponse);
             errorHandler("error saving profile to server, please try again later.");
         });;
