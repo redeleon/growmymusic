@@ -276,7 +276,12 @@ function initApp() {
             if (lpi.indexOf('growmymusic.com') > -1) {
                 logProfileDetails();
             } else {
-                beginSaveProfile();
+                var imageData = $('#image-data').val();
+                if (imageData.indexOf('growmymusic.com') > -1) {
+                    saveProfileDetailsToLocal();
+                } else {
+                    beginSaveProfile();
+                }
             }
         } else {
             beginSaveProfile();
@@ -292,10 +297,10 @@ function initApp() {
         localStorage.setItem('profile', stringifiedForm);
 
         setProfile();
-        logProfileDetails();
+        logProfileDetails(id);
     }
 
-    function logProfileDetails() {
+    function logProfileDetails(id) {
         
         showLoader('profile saved. syncing profile data to server');
 
@@ -412,7 +417,6 @@ function initApp() {
             }
 
             if (profile[x].name == 'profile-pitch') {
-                localStorage.setItem('profileimg', profile[x].value);
                 $('textarea[name="' + profile[x].name + '"]').val(profile[x].value);
                 $('#my-account-page p[data-artistvalue="profile-"]').text(profile[x].value);
                 localStorage.setItem(profile[x].name, profile[x].value);
@@ -4305,6 +4309,7 @@ function initApp() {
                             $('#seminar-schedule').hide();
                             $('#mail-form').hide();
                             $('#beatstars-items').show();
+                            $('#mail-modal').attr('data-type','hit-producer');
                             $('#mail-modal').fadeIn(200);
 
                             $('.mail-modal-buttons').hide();
