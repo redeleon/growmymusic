@@ -398,6 +398,19 @@ function initApp() {
                 $('#profile-photo-img').attr('src', localStorage.profileimg);
             }
 
+            if (profile[x].name == 'profile-bio') {
+                $('textarea[name="' + profile[x].name + '"]').val(profile[x].value);
+                $('#my-account-page p[data-artistvalue="' + profile[x].name + '"]').text(profile[x].value);
+                localStorage.setItem(profile[x].name, profile[x].value);
+            }
+
+            if (profile[x].name == 'profile-pitch') {
+                localStorage.setItem('profileimg', profile[x].value);
+                $('textarea[name="' + profile[x].name + '"]').val(profile[x].value);
+                $('#my-account-page p[data-artistvalue="profile-"]').text(profile[x].value);
+                localStorage.setItem(profile[x].name, profile[x].value);
+            }
+
             $('input[name="' + profile[x].name + '"]').val(profile[x].value);
             $('#my-account-page p[data-artistvalue="' + profile[x].name + '"]').text(profile[x].value);
             localStorage.setItem(profile[x].name, profile[x].value);
@@ -429,7 +442,8 @@ function initApp() {
             spotifycontribution,
             apple,
             applecowriters,
-            applecontribution;
+            applecontribution,
+            pitch;
 
         for (x = 0; x < profile.length; x++) {
             switch (profile[x].name) {
@@ -492,15 +506,17 @@ function initApp() {
                 case "profile-spotify-contribution":
                     spotifycontribution = profile[x].value;
                     break;
-                case "profile-appl-cowriters":
+                case "profile-apple-cowriters":
                     apple = profile[x].value;
                     break;
-                case "profile-appl-cowriters-cowriters":
+                case "profile-apple-cowriters-cowriters":
                     applecowriters = profile[x].value;
                     break;
-                case "profile-appl-cowriters-contribution":
+                case "profile-apple-cowriters-contribution":
                     applecontribution = profile[x].value;
                     break;
+                case "profile-pitch" :
+                    pitch = profile[x].value;
             }
         }
 
@@ -524,7 +540,8 @@ function initApp() {
             "Number of Co-writers (Spotify): " + spotifycowriters + "\n" +
             "Apple Music Best Track: " + apple + "\n" +
             "What did you write in this song? (Apple Music): " + applecontribution + "\n" +
-            "Number of Co-writers (Apple Music): " + applecowriters + "\n";
+            "Number of Co-writers (Apple Music): " + applecowriters + "\n" + 
+            "Song or Artist Pitch: " + pitch + "\n";
 
 
         sendMembershipCalendarMail(fn, ln, em, subj, content, type)
