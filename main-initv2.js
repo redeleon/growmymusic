@@ -299,14 +299,19 @@ function initApp() {
             dataType: "json",
         }).success(function(result) {
             $('.loader').hide();
+            console.log(result);
             errorHandler("profile saved to server");
+            var id = localStorage.user;
+            var responseData =  JSON.stringify(result);
+            logErrors(id, 'sucessfully saved profile data : ' + responseData);
         }).fail(function(response) {
+            console.log(response);
+            $('.loader').hide();
             var errorResponse = JSON.stringify(response);
             var id = localStorage.user;
             logErrors(id, errorResponse);
             errorHandler("error saving profile to server, please try again later.");
-        });;
-
+        });
     }
 
     function logProfileSubmissions(type) {
