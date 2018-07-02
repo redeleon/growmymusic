@@ -365,6 +365,8 @@ function initApp() {
         $.getJSON('https://spreadsheets.google.com/feeds/list/19gj2n8Q1P_s59dUjhiAg8ud03j50xrMxtNhSqmD34BU/1/public/values?alt=json', function(data, xhr) {
             console.log('getting profiles');
             console.log('profiles : ' + xhr);
+            showLoader('syncing profiles..');
+            
             if (xhr == 200 || xhr == "success") {
                 var entries = data.feed.entry;
                 console.log(entries);
@@ -1472,15 +1474,18 @@ function initApp() {
 
         initLogout();
 
-        if (typeof(localStorage.profile) != "undefined") {
-            console.log('profile in local');
-            setProfile();
-            initProfileBtns();
-        } else {
-            console.log('pulling profile from db');
-            getProfile();
-            initProfileBtns();
-        }
+        // if (typeof(localStorage.profile) != "undefined") {
+        //     console.log('profile in local');
+        //     setProfile();
+        //     initProfileBtns();
+        // } else {
+        //     console.log('pulling profile from db');
+        //     getProfile();
+        //     initProfileBtns();
+        // }
+
+        getProfile();
+        initProfileBtns();
 
         $('#artist-profile-btn').click(function() {
             $('#profile-builder').fadeIn();
