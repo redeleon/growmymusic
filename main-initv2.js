@@ -1156,7 +1156,7 @@ function initApp() {
             }
 
             checkFirstUse();
-            logErrors(localStorage.user, "subscriptions successfully pulled");
+            logErrors(localStorage.user, "subscriptions successfully pulled from db : "+ localStorage.activeMemberships);
         }, function(response) {
             $('.loader').fadeOut();
             errorHandler("An error has occured while trying to get your subscription information, please try again later.");
@@ -1229,7 +1229,7 @@ function initApp() {
             checkFirstUse();
             $('.loader').fadeOut(200);
             $('.loader-message').text('');
-            logErrors(localStorage.user, "loaded saved subscriptions");
+            logErrors(localStorage.user, "loaded saved subscriptions: " + localStorage.activeMemberships);
         }
     }
 
