@@ -274,7 +274,7 @@ function initApp() {
         if (typeof(localStorage.profileimg) != "undefined") {
             lpi = localStorage.profileimg;
             if (lpi.indexOf('growmymusic.com') > -1) {
-                logProfileDetails();
+                saveProfileDetailsToLocal();
             } else {
                 var imageData = $('#image-data').val();
                 if (imageData.indexOf('growmymusic.com') > -1) {
