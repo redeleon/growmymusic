@@ -3812,7 +3812,8 @@ function initApp() {
         }
 
         function onFailImage(message) {
-            alert('Upload image failed: ' + message);
+            //alert('Upload image failed: ' + message);
+            console.log("Upload image failed : " + message);
         }
 
 
