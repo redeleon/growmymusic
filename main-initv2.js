@@ -59,7 +59,7 @@ function initApp() {
             $('body').addClass("iphonex");
         }
     }
-    
+
 
     if (cordova) {
         screen.orientation.lock('portrait');
@@ -301,7 +301,7 @@ function initApp() {
     }
 
     function logProfileDetails(id, stringifiedForm) {
-        
+
         showLoader('profile saved. syncing profile data to server');
 
         var url = "https://script.google.com/macros/s/AKfycbxpQpj3Y9kYo98EfgDz9iDuqTxurRol-gNfwmnGktutsAGkreWP/exec";
@@ -366,7 +366,7 @@ function initApp() {
             console.log('getting profiles');
             console.log('profiles : ' + xhr);
             showLoader('syncing profiles..');
-            
+
             if (xhr == 200 || xhr == "success") {
                 var entries = data.feed.entry;
                 console.log(entries);
@@ -412,7 +412,7 @@ function initApp() {
                 $('#profile-photo-img').attr('src', localStorage.profileimg);
             }
 
-            
+
             $('input[name="' + profile[x].name + '"]').val(profile[x].value);
             $('#my-account-page p[data-artistvalue="' + profile[x].name + '"]').text(profile[x].value);
             localStorage.setItem(profile[x].name, profile[x].value);
@@ -427,6 +427,12 @@ function initApp() {
                 $('textarea[name="profile-pitch"]').val(profile[x].value);
                 $('#my-account-page p[data-artistvalue="profile-pitch"]').text(profile[x].value);
                 localStorage.setItem(profile[x].name, profile[x].value);
+            }
+
+            if (profile[x].name == 'profile-email') {
+              if ( typeof(profile[x].value) == "undefined" || typeof(profile[x].value) == undefined || profile[x].value == ""){
+                profile[x].value = localStorage.user;
+              }
             }
         }
     }
@@ -554,7 +560,7 @@ function initApp() {
             "Number of Co-writers (Spotify): " + spotifycowriters + "\n" +
             "Apple Music Best Track: " + apple + "\n" +
             "What did you write in this song? (Apple Music): " + applecontribution + "\n" +
-            "Number of Co-writers (Apple Music): " + applecowriters + "\n" + 
+            "Number of Co-writers (Apple Music): " + applecowriters + "\n" +
             "Song or Artist Pitch: " + pitch + "\n";
 
 
@@ -941,9 +947,9 @@ function initApp() {
             }
         } else {
             $('.loader').fadeOut(200);
-            setTimeout(function() {
-                $('.sect').slideToggle(200);
-            }, 300);
+            // setTimeout(function() {
+            //     $('.sect').slideToggle(200);
+            // }, 300);
         }
     }
 
@@ -2731,9 +2737,9 @@ function initApp() {
         var fullMsg = "Full Name: " + fn + "\r\nLast Name: " + ln + "\r\nEmail: " + em + "\r\nMessage: " + msg;
         /*cordova.plugins.email.open({
             to:emailAddress,
-            subject: subj, 
-            body: fullMsg, 
-            isHtml: false, 
+            subject: subj,
+            body: fullMsg,
+            isHtml: false,
         });*/
         window.location.href = "mailto:" + emailAddress + "?subject=" + subj + "&body=" + fullMsg;
     }
@@ -3784,7 +3790,7 @@ function initApp() {
             });
         });
 
-        // Select from gallery 
+        // Select from gallery
         $("#open-gallery").click(function() {
             navigator.camera.getPicture(onSuccessImage, onFailImage, {
                 quality: 20,
@@ -4477,7 +4483,6 @@ function initApp() {
                                 $('#mail-modal').fadeIn(200);
 
                                 $('#mail-modal button#mail-profile-send').click(function() {
-
                                     sendProfileDetails(localStorage.firstname, localStorage.lastname, localStorage.user, "2-Day Seminar Inquiry", type);
                                 });
 
@@ -4538,7 +4543,7 @@ function initApp() {
     /* ==================================
                 INIT ORDER
     ===================================*/
-    
+
 
     if (typeof(localStorage.id) != "undefined") {
         if (typeof(localStorage.profile) != "undefined") {
