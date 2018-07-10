@@ -118,3 +118,7 @@ body.ios.iphonex .tile {
 body span#ma-back {
     top:40px;
 }
+
+body .first-page .sect {
+    display:block !important;
+}
