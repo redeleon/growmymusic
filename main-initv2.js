@@ -947,9 +947,9 @@ function initApp() {
             }
         } else {
             $('.loader').fadeOut(200);
-            // setTimeout(function() {
-            //     $('.sect').slideToggle(200);
-            // }, 300);
+            setTimeout(function() {
+                $('.sect').slideToggle(200);
+            }, 300);
         }
     }
 
