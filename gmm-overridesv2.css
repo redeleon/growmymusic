@@ -112,5 +112,9 @@ body.ios.iphonex .content-body.scrolled .content-banner-text:nth-child(1).fx {
 }
 
 body.ios.iphonex .tile {
-    min-height:250px;
+    min-height:350px;
+}
+
+body span#ma-back {
+    top:40px;
 }
