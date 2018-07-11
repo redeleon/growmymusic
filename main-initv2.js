@@ -14,7 +14,9 @@ function initApp() {
     style.rel = 'stylesheet';
     style.href = 'https://rawgit.com/redeleon/growmymusic/master/gmm-overridesv2.css';
     document.body.appendChild(style);
-    $('.coupon-tab[data-loc="mb-dc-items"] p').text("One Time")
+    $('.coupon-tab[data-loc="mb-dc-items"] p').text("One Time");
+
+    console.log("Script version: " + scriptVersion);
 
     function showLoader(text) {
         $('.loader').fadeIn();
