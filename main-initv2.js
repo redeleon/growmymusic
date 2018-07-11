@@ -7,7 +7,7 @@ var iapPurchased = [];
 var scriptPath = "";
 var testMode = false;
 var activeMC = 0;
-var scriptVersion = 2.1;
+var scriptVersion = 2.12;
 
 function initApp() {
     var style = document.createElement('link');
@@ -3780,8 +3780,8 @@ function initApp() {
                 });
                 $(this).addClass('active');
                 $('#h-content .category-section').each(function() {
-                    $(this).stop().hide(300);
-                    $('.category-section[data-cat="' + target + '"]').stop().show(300);
+                    $(this).stop().hide();
+                    $('.category-section[data-cat="' + target + '"]').stop().show();
                 });
             })
         })
