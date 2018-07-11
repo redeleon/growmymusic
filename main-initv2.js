@@ -7,7 +7,7 @@ var iapPurchased = [];
 var scriptPath = "";
 var testMode = false;
 var activeMC = 0;
-var scriptVersion = 2;
+var scriptVersion = 2.1;
 
 function initApp() {
     var style = document.createElement('link');
@@ -947,9 +947,10 @@ function initApp() {
             }
         } else {
             $('.loader').fadeOut(200);
-            setTimeout(function() {
-                $('.sect').slideToggle(200);
-            }, 300);
+            $('.sect').show(200);
+            // setTimeout(function() {
+            //     $('.sect').slideToggle(200);
+            // }, 300);
         }
     }
 
@@ -3443,6 +3444,7 @@ function initApp() {
     }
 
     function setPages() {
+        // GET WORKSHOPS
         $.ajax({
             url: "https://s3.amazonaws.com/gmmonlinecourse2017/gmm_app/workshop.json",
             dataType: 'json',
@@ -3469,6 +3471,7 @@ function initApp() {
             }
         });
 
+        // GET DIGITAL MARKETING
         $.getJSON("https://s3.amazonaws.com/gmmonlinecourse2017/gmm_app/digitalmarketing.json", function(data) {
             console.log('digital marketing');
             console.log(data);
@@ -3484,6 +3487,7 @@ function initApp() {
             setTiles();
         });
 
+        // GET MODULES
         $.ajax({
             url: "https://s3.amazonaws.com/gmmonlinecourse2017/gmm_app/modules.json",
             dataType: 'json',
@@ -3539,6 +3543,7 @@ function initApp() {
             }
         });
 
+        // GET MASTERCLASS
         $.ajax({
             url: "https://s3.amazonaws.com/gmmonlinecourse2017/gmm_app/masterclass.json",
             dataType: 'json',
