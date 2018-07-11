@@ -9,6 +9,31 @@ var testMode = false;
 var activeMC = 0;
 var scriptVersion = 2.13;
 
+window.onerror = function(msg, url, line, col, error){
+   var extra = !col ? '' : '\ncolumn: ' + col;
+   extra += !error ? '' : '\nerror: ' + error;
+   // You can view the information in an alert to see things working like this:
+   console.log("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+   var errormsg = "Error: " + msg + "\nurl: " + url + "\nline: " + line + extra;
+
+   // TODO: Report this error via ajax so you can keep track
+   //       of what pages have JS issues
+   var url = "https://script.google.com/macros/s/AKfycbyVzHfMvstCBWqxvyrkl7rTGdHHmLB1K2_7wI95OJNoyDL-NOg/exec"
+    var parseUrl = url + "?Error=" + errormsg +"&ScriptVersion=" + scriptVersion;
+    var jqxhr = $.ajax({
+        url: parseUrl,
+        method: "GET",
+        dataType: "json"
+    }).success(function() {
+        console.log('errors logged');
+    });
+
+   // var suppressErrorAlert = true;
+   // // If you return true, then error alerts (like in older versions of 
+   // // Internet Explorer) will be suppressed.
+   // return suppressErrorAlert;
+}
+
 function initApp() {
     var style = document.createElement('link');
     style.rel = 'stylesheet';
