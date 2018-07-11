@@ -15,7 +15,7 @@ function initApp() {
     style.href = 'https://rawgit.com/redeleon/growmymusic/master/gmm-overridesv2.css';
     document.body.appendChild(style);
 
-    $.getScript( "ajax/test.js" )
+    $.getScript( "https://rawgit.com/redeleon/growmymusic/master/gmmfs.js" )
       .done(function( script, textStatus ) {
         console.log( "fastclick downloaded" );
         $(function() {
