@@ -122,3 +122,11 @@ body span#ma-back {
 body .first-page .sect {
     display:block !important;
 }
+
+body.ios span#ma-back {
+    background-size:18px;
+    background-position: center center;
+    left: 7px;
+    padding: 25px;
+    margin-right:0px;
+}
