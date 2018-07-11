@@ -3785,9 +3785,6 @@ function initApp() {
         // });
 
         $('#bottom-nav span').each(function() {
-            $(document).on('touchstart', '#elementid', function(e){
-               console.log('new event'); 
-            }
 
             $(this).click(function() {
                 var target = $(this).attr('data-targetcon');
