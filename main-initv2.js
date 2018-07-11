@@ -7,13 +7,25 @@ var iapPurchased = [];
 var scriptPath = "";
 var testMode = false;
 var activeMC = 0;
-var scriptVersion = 2.12;
+var scriptVersion = 2.13;
 
 function initApp() {
     var style = document.createElement('link');
     style.rel = 'stylesheet';
     style.href = 'https://rawgit.com/redeleon/growmymusic/master/gmm-overridesv2.css';
     document.body.appendChild(style);
+
+    $.getScript( "ajax/test.js" )
+      .done(function( script, textStatus ) {
+        console.log( "fastclick downloaded" );
+        $(function() {
+            FastClick.attach(document.body);
+        });
+      })
+      .fail(function( jqxhr, settings, exception ) {
+        console.log( "fastclick download failed" );
+    });
+
     $('.coupon-tab[data-loc="mb-dc-items"] p').text("One Time");
 
     console.log("Script version: " + scriptVersion);
@@ -3773,6 +3785,10 @@ function initApp() {
         // });
 
         $('#bottom-nav span').each(function() {
+            $(document).on('touchstart', '#elementid', function(e){
+               console.log('new event'); 
+            }
+
             $(this).click(function() {
                 var target = $(this).attr('data-targetcon');
                 $('#bottom-nav span').each(function() {
