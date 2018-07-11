@@ -4016,9 +4016,9 @@ function initApp() {
 
         $('span#my-account').click(function() {
 
-            $('.content-wrap').fadeOut(200);
-            $('.inner-content').fadeOut(200);
-            $('.navigation').fadeOut(200);
+            $('.content-wrap').hide();
+            $('.inner-content').hide();
+            $('.navigation').hide();
 
             $('#my-account-page').show();
             setTimeout(function() {
@@ -4029,13 +4029,13 @@ function initApp() {
 
             $('#ma-back').click(function() {
                 if ($('#inner-content').hasClass('content')) {
-                    $('.content-wrap').fadeIn(200);
-                    $('.inner-content').fadeIn(200);
+                    $('.content-wrap').show();
+                    $('.inner-content').show();
                 }
                 if (!$('#inner-content').hasClass('content')) {
-                    $('.content-wrap').fadeIn(200);
+                    $('.content-wrap').show();
                 }
-                $('.navigation').fadeIn(200);
+                $('.navigation').show();
                 $('#my-account-page').removeClass('ma-active');
 
                 setTimeout(function() {
@@ -4081,14 +4081,14 @@ function initApp() {
                         inAppPurchasesAndroid();
                     }
 
-                    $('#locked-wrap').fadeOut(200);
-                    $('#learnmore-wrap').fadeIn(200);
+                    $('#locked-wrap').hide();
+                    $('#learnmore-wrap').show();
 
                     $('#learnmore-wrap').click(function(e) {
                         if (e.target != this) {
                             return false;
                         } else {
-                            $('#learnmore-wrap').fadeOut(200);
+                            $('#learnmore-wrap').hide();
                             $('body').removeClass('learn-more-open');
                         }
                     });
@@ -4096,7 +4096,7 @@ function initApp() {
             });
 
             $('#my-account-page div.lm-close').click(function() {
-                $('#learnmore-wrap').fadeOut(200);
+                $('#learnmore-wrap').hide();
                 $('body').removeClass('learn-more-open');
             });
 
