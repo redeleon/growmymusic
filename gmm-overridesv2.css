@@ -120,7 +120,7 @@ body span#ma-back {
 }
 
 body .first-page .sect {
-    display:block !important;
+    display:none;
 }
 
 body.ios span#ma-back {
