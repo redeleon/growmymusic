@@ -5,7 +5,7 @@ div#my-account-page .ma-banner {
 body .loader {
     height: auto;
     top: initial;
-    bottom: 0;
+    bottom: 0px;
     text-align: center;
     padding: 10px;
     z-index: 9999999999;
@@ -41,4 +41,92 @@ div#learnmore-wrap .locked-modal{
 .ma-banner-content p.email {
     color: #fff;
     font-size: 15px;
+}
+
+.mm-noprofile p {
+    font-size: 16px;
+    line-height: normal;
+    font-weight: bold;
+}
+.mm-noprofile button {
+    display: block;
+    width: 100%;
+    padding: 15px 10px;
+    border-radius: 50px;
+    border: 0;
+    font-family: 'josefinsans_regular';
+    font-size: 17px;
+    color: #fff;
+    background: #8bc439;
+    margin-top: 25px;
+}
+.mm-noprofile {
+    padding: 20px 0;
+    font-family: 'josefinsans_regular';
+    text-align: center;
+    display:none;
+}
+
+div#mail-modal.noprofile .mm-noprofile {
+    display: block !important;
+}
+div#mail-modal.hasprofile .mm-noprofile {
+    display: none !important;
+}
+
+div#mail-modal.hasprofile .mail-modal-buttons {
+    display: block !important;
+}
+div#mail-modal.noprofile .mail-modal-buttons {
+    display: none !important;
+}
+span#log-back {
+    top:45px;
+}
+div.members-calendar-tiles.submitted .tile-wrap:after,
+div.members-calendar-tiles.submitted .tile-wrap.active:after {
+    display:none;
+}
+
+#mail-modal[data-type="hit-producer"] .mail-modal-buttons,
+#mail-modal[data-type="hit-producer"] .mm-noprofile {
+    display:none !important;
+}
+
+/* IPHONE X SPECIFIC */
+body.ios.iphonex .navigation {
+    padding: 40px 10px;
+    height: 90px;
+}
+
+body.ios.iphonex .content-wrap {
+    padding-top:90px;
+}
+
+body.ios.iphonex .content-body.scrolled .content-banner {
+    top:150px;
+}
+
+body.ios.iphonex .content-body.scrolled .content-banner-text:nth-child(1).fx {
+    top:50px;
+}
+
+body.ios.iphonex .tile {
+    min-height:350px;
+}
+
+body span#ma-back {
+    top:40px;
+}
+
+body .first-page .sect {
+    display:none;
+}
+
+body.ios span#ma-back {
+    background-size:18px;
+    background-position: center center;
+    left: 7px;
+    padding: 25px;
+    margin-right:0px;
 }
